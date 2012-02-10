@@ -30,29 +30,27 @@ Scene::Scene()
 	mPointLights = new PointLight*[MAX_LIGHTS]; 
 	memset( mPointLights, 0, MAX_LIGHTS * sizeof( PointLight* ) );
 	mNumPointLights = 0;
+}
 
-	//The SCENE DATA!
-	mShapes[mNumShapes++] = new Sphere( Vector3( 0.0f,	0.0f,	5.0f ),	1.0f );
-	mShapes[mNumShapes++] = new Sphere( Vector3( 0.1f, -0.05f,	3.0f ),	0.2f );
-	mShapes[mNumShapes++] = new Sphere( Vector3( 1.0f,	1.0f,	7.0f ),	1.0f );
+void Scene::AddSphere( Vector3 pos, float radius )
+{
+	mShapes[mNumShapes++] = new Sphere( pos, radius );
+}
 
-	mShapes[mNumShapes++] = new Triangle( Vector3( -10, -2, 0 ), Vector3( 10, -2, 10.f ), Vector3( 10.f, -2, 0 ) );
-	mShapes[mNumShapes++] = new Triangle( Vector3( -10, -2, 0 ), Vector3( -10, -2, 10.f ), Vector3( 10.f, -2, 10 ) );
-	
-	for( int i = 0; i < 300; ++i )
+void Scene::AddTriangle( Vector3 p1, Vector3 p2, Vector3 p3 )
+{
+	mShapes[mNumShapes++] = new Triangle( p1, p2, p3 );
+}
+
+void Scene::AddPointLight( Vector3 pos, ColourRGB colour, float size, int taps )
+{
+	for( int i = 0; i < taps; ++i )
 	{
-		float x = ((float)rand() / RAND_MAX) / 4.0f;
-		float y = ((float)rand() / RAND_MAX) / 4.0f;
-		float z = ((float)rand() / RAND_MAX) / 4.0f;
-		mPointLights[mNumPointLights++] = new PointLight( Vector3( 1.0f + x,	1.0f + y, z ), ColourRGB( 1.0f/300.0f, 1.0f/300.0f, 1.0f/300.0f ) );
-	}
-
-	for( int i = 0; i < 300; ++i )
-	{
-		float x = ((float)rand() / RAND_MAX) / 3.0f;
-		float y = ((float)rand() / RAND_MAX) / 3.0f;
-		float z = ((float)rand() / RAND_MAX) / 3.0f;
-		mPointLights[mNumPointLights++] = new PointLight( Vector3( -0.5f + x,	-1.5f + y, z ), ColourRGB( 0, 0, 1.0f/300.0f ) );
+		ColourRGB point_colour = colour / taps;
+		float x = size * (((float)rand() / RAND_MAX) - 0.5f);
+		float y = size * (((float)rand() / RAND_MAX) - 0.5f);
+		float z = size * (((float)rand() / RAND_MAX) - 0.5f);
+		mPointLights[mNumPointLights++] = new PointLight( pos + Vector3( x, y, z), point_colour );
 	}
 }
 

@@ -17,6 +17,10 @@ public:
 	static void Init();
 	static Scene* Instance() { return mInstance;};
 	
+	void AddSphere( Vector3 pos, float radius );
+	void AddTriangle( Vector3 p1, Vector3 p2, Vector3 p3 );
+	void AddPointLight( Vector3 pos, ColourRGB colour, float size, int taps);
+
 	ColourRGB GetColour( Ray& ray );
 	Shape* Scene::NearestCollision( Ray& ray, float& distance );
 
