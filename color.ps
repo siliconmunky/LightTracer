@@ -1,0 +1,55 @@
+////////////////////////////////////////////////////////////////////////////////
+// Filename: color.ps
+////////////////////////////////////////////////////////////////////////////////
+
+struct tPixel
+{
+    float4 mColour;
+};
+
+StructuredBuffer<tPixel> Buffer0 : register(t0);
+
+cbuffer ConstantBuffer : register(cb0)
+{
+    int gWidth;
+    int gHeight;
+};
+
+//Texture2D shaderTexture;
+//SamplerState SampleType;
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+	float4 uv	: TEXCOORD;
+};
+
+//struct PS_OUT
+//{
+//    float4 mColour0 : SV_TARGET0;
+//    float4 mColour1 : SV_TARGET1;
+//};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Pixel Shader
+////////////////////////////////////////////////////////////////////////////////
+float4 ColorPixelShader(PixelInputType input) : SV_TARGET
+{
+	//float4 textureColor;
+    //textureColor = shaderTexture.Sample( SampleType, input.uv );
+
+	float2 uv = input.uv;
+
+	uint index = (int)(uv.x * gWidth) + (int)(uv.y * gHeight) * gWidth;
+
+	float4 result;
+	result.rgb = Buffer0[index].mColour.rgb;
+	result.a = 1;
+
+    return result;
+}

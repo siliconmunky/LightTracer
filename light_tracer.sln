@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light_tracer", "light_tracer\light_tracer.vcxproj", "{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light_tracer", "light_tracer.vcxproj", "{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

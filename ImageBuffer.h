@@ -16,6 +16,8 @@ public:
 		mBuffer[Index( column, row )] = value;
 	}
 
+	ColourRGB* GetBuffer() { return mBuffer; };
+
 private:
 
 	int Index( int column, int row ) const

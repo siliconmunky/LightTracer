@@ -9,7 +9,7 @@
 #pragma once
 
 #include "Shape.h"
-#include "Vector3.h"
+#include "../Vector3.h"
 
 class Sphere : public Shape
 {
@@ -17,8 +17,8 @@ public:
 	Sphere() {};
 	Sphere( Vector3 position, float radius );
 	
-	virtual bool IsHitByRay( const Ray& ray, float& distance );
-	virtual ColourRGB GetColourFromRay( const Ray& ray );
+	//virtual bool IsHitByRay( const Ray& ray, float& distance );
+	//virtual ColourRGB GetColourFromRay( const Ray& ray );
 	
 private:
 	Vector3 mPosition;

@@ -18,7 +18,7 @@ Sphere::Sphere( Vector3 position, float radius )
 {
 }
 
-bool Sphere::IsHitByRay( const Ray& ray, float& distance )
+/*bool Sphere::IsHitByRay( const Ray& ray, float& distance )
 {	
 	Vector3 to_sphere =	mPosition - ray.mPoint;
 	float dot = to_sphere * ray.mDirection;
@@ -60,4 +60,4 @@ ColourRGB Sphere::GetColourFromRay( const Ray& ray )
 	Vector3 normal = !(point_on_surface - mPosition);
 
 	return CalculateLighting( point_on_surface, normal, ray.mDirection );
-}
+}*/

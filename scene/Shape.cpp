@@ -13,14 +13,14 @@
 #include <algorithm>
 using namespace std;
 
-ColourRGB Shape::CalculateLighting( Vector3 point, Vector3 normal, Vector3 view ) const
+/*ColourRGB Shape::CalculateLighting( Vector3 point, Vector3 normal, Vector3 view ) const
 {
 	//get all the lights, loop over them and test for vision
 
 	int num_lights = 0;
 	PointLight** point_lights = Scene::Instance()->GetPointLights( num_lights );
 	
-	ColourRGB c;
+	ColourRGB c( 0.05f, 0.05f, 0.05f );
 
 	for( int i = 0; i < num_lights; ++i )
 	{
@@ -77,4 +77,4 @@ float Shape::OrenNayerDiffuse( Vector3 light, Vector3 view, Vector3 normal, floa
 	float output = max( 0.0f, l_dot_n ) * final;
 
 	return output;
-}
+}*/

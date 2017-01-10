@@ -9,7 +9,7 @@
 #pragma once
 
 #include "Shape.h"
-#include "Vector3.h"
+#include "..\Vector3.h"
 
 class Triangle : public Shape
 {
@@ -17,8 +17,8 @@ public:
 	Triangle() {};
 	Triangle( Vector3 v0, Vector3 v1, Vector3 v2 );
 	
-	virtual bool IsHitByRay( const Ray& ray, float& distance );
-	virtual ColourRGB GetColourFromRay( const Ray& ray );
+	//virtual bool IsHitByRay( const Ray& ray, float& distance );
+	//virtual ColourRGB GetColourFromRay( const Ray& ray );
 	
 private:
 	Vector3 mV0;

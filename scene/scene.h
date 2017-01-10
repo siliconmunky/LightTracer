@@ -21,8 +21,8 @@ public:
 	void AddTriangle( Vector3 p1, Vector3 p2, Vector3 p3 );
 	void AddPointLight( Vector3 pos, ColourRGB colour, float size, int taps);
 
-	ColourRGB GetColour( Ray& ray );
-	Shape* Scene::NearestCollision( Ray& ray, float& distance );
+	//ColourRGB GetColour( Ray& ray );
+	//Shape* Scene::NearestCollision( Ray& ray, float& distance );
 
 	PointLight** GetPointLights( int& num_lights ) const { num_lights = mNumPointLights; return mPointLights; };
 
