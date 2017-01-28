@@ -242,7 +242,6 @@ bool InitWindowAndDevice( int width, int height )
 	}
 	else
 	{
-		// If windowed then set it to 800x600 resolution.
 		screen_width  = width;
 		screen_height = height;
 
@@ -719,8 +718,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
 	Scene::Init();
 
-	int w_in_pix, h_in_pix = 0;
-	ParseDescription( "scene.txt", w_in_pix, h_in_pix );
+	int w_in_pix = 1920;
+	int h_in_pix = 1080;
+	//ParseDescription( "scene.txt", w_in_pix, h_in_pix );
 	
 	const float aspect = (float)w_in_pix / h_in_pix;
 	//const float fov = 0.75f;
@@ -859,17 +859,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 				}
 				break;
 
-				/*case WM_MOUSEMOVE:
+				case WM_MOUSEMOVE:
 				{
-					int xPos = GET_X_LPARAM(msg.lParam); 
-					int yPos = GET_Y_LPARAM(msg.lParam); 
-					SetCursorPos( 420, 280 );
-					
-					static float x_sensitivity = -0.001f;
-					static float y_sensitivity = -0.001f;
-					cam.RotateUpDown( (yPos - 100)  * y_sensitivity );
-					cam.RotateLeftRight( (xPos - 100) * x_sensitivity );
-				}*/
+					POINT pos_m;
+					GetCursorPos(&pos_m);
+					int x_pos = pos_m.x;
+					int y_pos = pos_m.y;
+
+					static int mid_width = GetSystemMetrics(SM_CXSCREEN) / 2;
+					static int mid_height = GetSystemMetrics(SM_CYSCREEN) / 2;
+					SetCursorPos(mid_width, mid_height);
+
+					int x_move = x_pos - mid_width;
+					int y_move = y_pos - mid_height;
+					static float x_sensitivity = -0.0001f;
+					static float y_sensitivity = -0.0001f;
+					cam.RotateLeftRight(-x_move * x_sensitivity);
+					cam.RotateUpDown(y_move * y_sensitivity);
+				}
 				break;
 			}
 			
@@ -882,23 +889,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 			cb_camera.cam_pos_y = cam.GetPosition()->mY;
 			cb_camera.cam_pos_z = cam.GetPosition()->mZ;		
 			
-			/*
-			zaxis = normal(At - Eye)
-			xaxis = normal(cross(Up, zaxis))
-			yaxis = cross(zaxis, xaxis)
-
-			 xaxis.x           yaxis.x           zaxis.x          0
-			 xaxis.y           yaxis.y           zaxis.y          0
-			 xaxis.z           yaxis.z           zaxis.z          0
-			*/
 			Vector3 zaxis = *cam.GetView();
 			Vector3 xaxis = *cam.GetUpVector() % zaxis;
 			Vector3 yaxis = zaxis % xaxis;
 
-			cb_camera.cam_orientation_00 = xaxis.mX; cb_camera.cam_orientation_01 = yaxis.mX; cb_camera.cam_orientation_02 = zaxis.mX; //float3x3;
-			cb_camera.cam_orientation_10 = xaxis.mY; cb_camera.cam_orientation_11 = yaxis.mY; cb_camera.cam_orientation_12 = zaxis.mY; 
-			cb_camera.cam_orientation_20 = xaxis.mZ; cb_camera.cam_orientation_21 = yaxis.mZ; cb_camera.cam_orientation_22 = zaxis.mZ; 
-			
+			cb_camera.cam_orientation_00 = xaxis.mX; cb_camera.cam_orientation_01 = xaxis.mY; cb_camera.cam_orientation_02 = xaxis.mZ; //float3x3;
+			cb_camera.cam_orientation_10 = yaxis.mX; cb_camera.cam_orientation_11 = yaxis.mY; cb_camera.cam_orientation_12 = yaxis.mZ;
+			cb_camera.cam_orientation_20 = zaxis.mX; cb_camera.cam_orientation_21 = zaxis.mY; cb_camera.cam_orientation_22 = zaxis.mZ;
+
+
 			m_pImmediateContext->UpdateSubresource( constant_bufer_camera, 0 , 0, &cb_camera, 0, 0 );
 
 			float color[4];
