@@ -83,13 +83,14 @@
     <ClInclude Include="AABB.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ColourRGB.h" />
-    <ClInclude Include="ImageBuffer.h" />
+    <ClInclude Include="Log.h" />
+    <ClInclude Include="Matrix3x3.h" />
     <ClInclude Include="Vector3.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ColourRGB.cpp" />
-    <ClCompile Include="ImageBuffer.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="scene\PointLight.cpp" />
     <ClCompile Include="scene\Scene.cpp" />

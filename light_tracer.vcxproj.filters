@@ -14,9 +14,6 @@
     <ClInclude Include="Vector3.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="ImageBuffer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="ColourRGB.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -26,11 +23,14 @@
     <ClInclude Include="AABB.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix3x3.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ImageBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Vector3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -56,6 +56,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scene\Triangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

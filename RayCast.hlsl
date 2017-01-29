@@ -21,6 +21,11 @@ struct Sphere
 	float mRadius;
 };
 
+
+
+
+
+
 cbuffer ConstantBuffer : register(cb0)
 {
     int gWidth;
@@ -38,20 +43,13 @@ cbuffer ConstantBufferCamera : register(cb1)
 
 
 StructuredBuffer<Pixel> Buffer0 : register(t0);
+
+
 RWStructuredBuffer<Pixel> BufferOut : register(u0);
 
 
 
-float3 readData()
-{
-	float3 output;
-	
-	output.x = Buffer0[0].mColour.x;
-	output.y = Buffer0[0].mColour.y;
-	output.z = Buffer0[0].mColour.z;
 
-	return output;
-}
 void writeToPixel(int x, int y, float3 colour)
 {
 	uint index = x + y * gWidth;
@@ -96,15 +94,15 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 	//int num_lights = 0;
 	//PointLight** point_lights = Scene::Instance()->GetPointLights( num_lights );
 	
-	float3 c = float3( 0.05f, 0.05f, 0.05f );
-
+	float3 c = 0;
+	
 	PointLight light;
 	light.mPosition = float3( 1, 2, 3 );
 	light.mColour = float3( 0.7f, 0.6, 0.6f );
 
 	//for( int i = 0; i < num_lights; ++i )
 	{
-		float3 to_light = light.mPosition /*point_lights[i]->GetPosition()*/ - position;
+		float3 to_light = light.mPosition - position;
 		float light_distance = length(to_light);
 		to_light = normalize(to_light);
 
@@ -116,7 +114,7 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 
-			c = c + light.mColour /*point_lights[i]->GetColour()*/ * diffuse;
+			c = c + light.mColour * diffuse;
 		}
 	}
 
@@ -174,10 +172,10 @@ float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
 [numthreads(32, 32, 1)]
 void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 {
-	float3 pixel = readData();
+	float3 pixel = float3(0,0,0);
 
-	float3 cam_point = gCameraPosition;//float3( 0, 0, 0 );
-	float3 direction = float3( 0, 0, 1 ); //gCameraDirection;//
+	float3 cam_point = gCameraPosition;
+	float3 direction = float3( 0, 0, 1 );
 	float aspect = (float)gWidth / gHeight;
 	float fov = 0.75f;
 			
@@ -191,7 +189,9 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	gCameraOrientation._m10 = cam_orientation_10; gCameraOrientation._m11 = cam_orientation_11; gCameraOrientation._m12 = cam_orientation_12;
 	gCameraOrientation._m20 = cam_orientation_20; gCameraOrientation._m21 = cam_orientation_21; gCameraOrientation._m22 = cam_orientation_22;
 
-	ray_dir = mul( ray_dir, gCameraOrientation );
+	ray_dir = mul( gCameraOrientation, ray_dir);
+	ray_dir = normalize(ray_dir);
+
 
 	Ray ray;
 	ray.mPoint = cam_point;
