@@ -26,7 +26,7 @@ struct Sphere
 
 
 
-cbuffer ConstantBuffer : register(cb0)
+cbuffer ConstantBufferResolution : register(cb0)
 {
     int gWidth;
     int gHeight;
@@ -40,9 +40,12 @@ cbuffer ConstantBufferCamera : register(cb1)
 	float cam_orientation_20, cam_orientation_21, cam_orientation_22; 
 };
 
+cbuffer ConstantBufferPrimitives : register(cb2)
+{
+	int gNumSpheres;
+};
 
-
-StructuredBuffer<Pixel> Buffer0 : register(t0);
+StructuredBuffer<Sphere> SphereBuffer : register(t0);
 
 
 RWStructuredBuffer<Pixel> BufferOut : register(u0);

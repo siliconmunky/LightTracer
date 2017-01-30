@@ -12,12 +12,6 @@ struct VertexType
 	D3DXVECTOR4 uv;
 };
 
-struct MatrixBufferType
-{
-	D3DXMATRIX world;
-	D3DXMATRIX view;
-	D3DXMATRIX projection;
-};
 
 struct tPixel
 {
@@ -27,13 +21,13 @@ struct tPixel
 	float a;
 };
 
-__declspec(align(16)) struct tConstantBuffer
+__declspec(align(16)) struct tResolutionCB
 {
 	int width;
 	int height;
 };
 
-__declspec(align(16)) struct tConstantBufferCamera
+__declspec(align(16)) struct tCameraCB
 {
 	float cam_pos_x, cam_pos_y, cam_pos_z; //gCameraPosition
 	float cam_orientation_00, cam_orientation_01, cam_orientation_02;
@@ -96,28 +90,28 @@ bool Render::InitDevice()
 	D3D_FEATURE_LEVEL       desired_featureLevel = D3D_FEATURE_LEVEL_11_0;
 	D3D_FEATURE_LEVEL       featureLevel = D3D_FEATURE_LEVEL_11_0;
 	hr = D3D11CreateDeviceAndSwapChain(NULL, driverType, NULL, createDeviceFlags, &desired_featureLevel, 1,
-		D3D11_SDK_VERSION, &sd, &m_pSwapChain, &m_pd3dDevice, &featureLevel, &m_pImmediateContext);
+		D3D11_SDK_VERSION, &sd, &mSwapChain, &mD3DDevice, &featureLevel, &mImmediateContext);
 	if (FAILED(hr))
 		return false;
 
 
 	// Get the pointer to the back buffer.
 	ID3D11Texture2D* backBufferPtr;
-	hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferPtr);
+	hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferPtr);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
 	// Create the render target view with the back buffer pointer.
-	hr = m_pd3dDevice->CreateRenderTargetView(backBufferPtr, NULL, &m_pRenderTargetView);
+	hr = mD3DDevice->CreateRenderTargetView(backBufferPtr, NULL, &mRenderTargetView);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
 
-	m_pImmediateContext->OMSetRenderTargets(1, &m_pRenderTargetView, NULL/*m_depthStencilView*/);
+	mImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, NULL/*m_depthStencilView*/);
 
 
 	////////////////////////////////////////
@@ -139,7 +133,7 @@ bool Render::InitDevice()
 
 	D3D11_SUBRESOURCE_DATA InitData;
 	InitData.pSysMem = &colour;//THIS IS WHERE THE SCENE INFORMATION GOES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	hr = m_pd3dDevice->CreateBuffer(&input_descGPUBuffer, &InitData, &m_srcDataGPUBuffer);
+	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, &InitData, &m_srcDataGPUBuffer);
 	if (FAILED(hr))
 		return false;
 
@@ -150,7 +144,7 @@ bool Render::InitDevice()
 	input_descView.BufferEx.FirstElement = 0;
 	input_descView.BufferEx.NumElements = 1;
 
-	if (FAILED(m_pd3dDevice->CreateShaderResourceView(m_srcDataGPUBuffer, &input_descView, &m_srcDataGPUBufferView)))
+	if (FAILED(mD3DDevice->CreateShaderResourceView(m_srcDataGPUBuffer, &input_descView, &m_srcDataGPUBufferView)))
 		return false;
 
 
@@ -164,7 +158,7 @@ bool Render::InitDevice()
 	output_descGPUBuffer.ByteWidth = sizeof(tPixel) * gWidth * gHeight;
 	output_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	output_descGPUBuffer.StructureByteStride = sizeof(tPixel);
-	if (FAILED(m_pd3dDevice->CreateBuffer(&output_descGPUBuffer, NULL, &m_destDataGPUBuffer)))
+	if (FAILED(mD3DDevice->CreateBuffer(&output_descGPUBuffer, NULL, &mCSDestDataBuffer)))
 		return false;
 
 	// The view we need for the output is an unordered access view. This is to allow the compute shader to write anywhere in the buffer.
@@ -174,9 +168,10 @@ bool Render::InitDevice()
 	output_descView.Format = DXGI_FORMAT_UNKNOWN;      // Format must be must be DXGI_FORMAT_UNKNOWN, when creating a View of a Structured Buffer
 	output_descView.Buffer.FirstElement = 0;
 	output_descView.Buffer.NumElements = gWidth * gHeight;
-	if (FAILED(m_pd3dDevice->CreateUnorderedAccessView(m_destDataGPUBuffer, &output_descView, &m_destDataGPUBufferView)))
+	if (FAILED(mD3DDevice->CreateUnorderedAccessView(mCSDestDataBuffer, &output_descView, &mCSDestDataBufferView)))
 		return false;
 
+	// The SRV for reading the data back into the pixel shader
 	D3D11_SHADER_RESOURCE_VIEW_DESC output_srv_descView;
 	ZeroMemory(&output_srv_descView, sizeof(output_srv_descView));
 	output_srv_descView.Format = DXGI_FORMAT_UNKNOWN;
@@ -184,7 +179,7 @@ bool Render::InitDevice()
 	output_srv_descView.BufferEx.FirstElement = 0;
 	output_srv_descView.BufferEx.NumElements = gWidth * gHeight;
 	output_srv_descView.BufferEx.Flags = 0;
-	if (FAILED(m_pd3dDevice->CreateShaderResourceView(m_destDataGPUBuffer, &output_srv_descView, &m_destDataSRV)))
+	if (FAILED(mD3DDevice->CreateShaderResourceView(mCSDestDataBuffer, &output_srv_descView, &mDestDataSRV)))
 		return false;
 
 
@@ -198,7 +193,7 @@ bool Render::InitDevice()
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
 
-	LPCSTR pProfile = (m_pd3dDevice->GetFeatureLevel() >= D3D_FEATURE_LEVEL_11_0) ? "cs_5_0" : "cs_4_0";
+	LPCSTR pProfile = (mD3DDevice->GetFeatureLevel() >= D3D_FEATURE_LEVEL_11_0) ? "cs_5_0" : "cs_4_0";
 
 	ID3DBlob* pErrorBlob = NULL;
 	ID3DBlob* pBlob = NULL;
@@ -216,7 +211,7 @@ bool Render::InitDevice()
 	}
 	else
 	{
-		hr = m_pd3dDevice->CreateComputeShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, &m_computeShader);
+		hr = mD3DDevice->CreateComputeShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, &mComputeShader);
 		if (pErrorBlob)
 			pErrorBlob->Release();
 		if (pBlob)
@@ -233,9 +228,9 @@ bool Render::InitDevice()
 	ID3D10Blob* pixelShaderBuffer;
 	D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
 	unsigned int numElements;
-	D3D11_BUFFER_DESC matrixBufferDesc;
+	//D3D11_BUFFER_DESC matrixBufferDesc;
 
-	D3D11_SAMPLER_DESC samplerDesc;
+	//D3D11_SAMPLER_DESC samplerDesc;
 
 	// Initialize the pointers this function will use to null.
 	errorMessage = 0;
@@ -280,14 +275,14 @@ bool Render::InitDevice()
 	}
 
 	// Create the vertex shader from the buffer.
-	hr = m_pd3dDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &m_vertexShader);
+	hr = mD3DDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &mVertexShader);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
 	// Create the pixel shader from the buffer.
-	hr = m_pd3dDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &m_pixelShader);
+	hr = mD3DDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &mPixelShader);
 	if (FAILED(hr))
 	{
 		return false;
@@ -323,8 +318,8 @@ bool Render::InitDevice()
 	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
 	// Create the vertex input layout.
-	hr = m_pd3dDevice->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(),
-		vertexShaderBuffer->GetBufferSize(), &m_layout);
+	hr = mD3DDevice->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(),
+		vertexShaderBuffer->GetBufferSize(), &mLayout);
 	if (FAILED(hr))
 	{
 		return false;
@@ -337,23 +332,9 @@ bool Render::InitDevice()
 	pixelShaderBuffer->Release();
 	pixelShaderBuffer = 0;
 
-	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
-	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
-	matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	matrixBufferDesc.MiscFlags = 0;
-	matrixBufferDesc.StructureByteStride = 0;
-
-	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-	hr = m_pd3dDevice->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
-	if (FAILED(hr))
-	{
-		return false;
-	}
 
 	// Create a texture sampler state description.
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	/*samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -368,11 +349,11 @@ bool Render::InitDevice()
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	hr = m_pd3dDevice->CreateSamplerState(&samplerDesc, &m_sampleState);
+	hr = mD3DDevice->CreateSamplerState(&samplerDesc, &m_sampleState);
 	if (FAILED(hr))
 	{
 		return false;
-	}
+	}*/
 
 
 
@@ -382,10 +363,10 @@ bool Render::InitDevice()
 	D3D11_SUBRESOURCE_DATA vertexData;
 
 	// Set the number of vertices in the vertex array.
-	m_vertexCount = 4;
+	mVertexCount = 4;
 
 	// Create the vertex array.
-	vertices = new VertexType[m_vertexCount];
+	vertices = new VertexType[mVertexCount];
 	if (!vertices)
 	{
 		return false;
@@ -411,7 +392,7 @@ bool Render::InitDevice()
 
 	// Set up the description of the static vertex buffer.
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(VertexType) * m_vertexCount;
+	vertexBufferDesc.ByteWidth = sizeof(VertexType) * mVertexCount;
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.CPUAccessFlags = 0;
 	vertexBufferDesc.MiscFlags = 0;
@@ -423,7 +404,7 @@ bool Render::InitDevice()
 	vertexData.SysMemSlicePitch = 0;
 
 	// Now create the vertex buffer.
-	hr = m_pd3dDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
+	hr = mD3DDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &mVertexBuffer);
 	if (FAILED(hr))
 	{
 		return false;
@@ -436,7 +417,7 @@ bool Render::InitDevice()
 	rasterDesc.CullMode = D3D11_CULL_BACK;
 	rasterDesc.DepthBias = 0;
 	rasterDesc.DepthBiasClamp = 0.0f;
-	rasterDesc.DepthClipEnable = true;
+	rasterDesc.DepthClipEnable = false;
 	rasterDesc.FillMode = D3D11_FILL_SOLID;
 	rasterDesc.FrontCounterClockwise = false;
 	rasterDesc.MultisampleEnable = false;
@@ -444,14 +425,14 @@ bool Render::InitDevice()
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
 	// Create the rasterizer state from the description we just filled out.
-	hr = m_pd3dDevice->CreateRasterizerState(&rasterDesc, &m_rasterState);
+	hr = mD3DDevice->CreateRasterizerState(&rasterDesc, &mRasterState);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
 	// Now set the rasterizer state.
-	m_pImmediateContext->RSSetState(m_rasterState);
+	mImmediateContext->RSSetState(mRasterState);
 
 	// Setup the viewport for rendering.
 	D3D11_VIEWPORT viewport;
@@ -463,7 +444,7 @@ bool Render::InitDevice()
 	viewport.TopLeftY = 0.0f;
 
 	// Create the viewport.
-	m_pImmediateContext->RSSetViewports(1, &viewport);
+	mImmediateContext->RSSetViewports(1, &viewport);
 
 
 
@@ -473,18 +454,18 @@ bool Render::InitDevice()
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.ByteWidth = sizeof(tConstantBuffer);
+	bd.ByteWidth = sizeof(tResolutionCB);
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	hr = m_pd3dDevice->CreateBuffer(&bd, 0, &constant_bufer);
+	hr = mD3DDevice->CreateBuffer(&bd, 0, &mResConstantBuffer);
 	if (hr != S_OK)
 	{
 		return false;
 	}
-	tConstantBuffer cb;
+	tResolutionCB cb;
 	cb.width = gWidth;
 	cb.height = gHeight;
 
-	m_pImmediateContext->UpdateSubresource(constant_bufer, 0, 0, &cb, 0, 0);
+	mImmediateContext->UpdateSubresource(mResConstantBuffer, 0, 0, &cb, 0, 0);
 
 
 
@@ -492,9 +473,9 @@ bool Render::InitDevice()
 	D3D11_BUFFER_DESC bd_camera;
 	ZeroMemory(&bd_camera, sizeof(bd_camera));
 	bd_camera.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd_camera.ByteWidth = sizeof(tConstantBufferCamera);
+	bd_camera.ByteWidth = sizeof(tCameraCB);
 	bd_camera.Usage = D3D11_USAGE_DEFAULT;
-	hr = m_pd3dDevice->CreateBuffer(&bd_camera, 0, &constant_bufer_camera);
+	hr = mD3DDevice->CreateBuffer(&bd_camera, 0, &mCameraConstantBuffer);
 	if (hr != S_OK)
 	{
 		return false;
@@ -509,7 +490,7 @@ bool Render::InitDevice()
 
 void Render::UpdateBuffers()
 {
-	tConstantBufferCamera cb_camera;
+	tCameraCB cb_camera;
 
 	//Set camera constants to cb
 	cb_camera.cam_pos_x = Camera::Instance->GetPosition()->mX;
@@ -521,7 +502,7 @@ void Render::UpdateBuffers()
 	cb_camera.cam_orientation_10 = view_mat.m10; cb_camera.cam_orientation_11 = view_mat.m11; cb_camera.cam_orientation_12 = view_mat.m12;
 	cb_camera.cam_orientation_20 = view_mat.m20; cb_camera.cam_orientation_21 = view_mat.m21; cb_camera.cam_orientation_22 = view_mat.m22;
 
-	m_pImmediateContext->UpdateSubresource(constant_bufer_camera, 0, 0, &cb_camera, 0, 0);
+	mImmediateContext->UpdateSubresource(mCameraConstantBuffer, 0, 0, &cb_camera, 0, 0);
 }
 
 
@@ -533,33 +514,34 @@ void Render::DoFrame()
 
 
 
-	float color[4];
+	/*float color[4];
 	color[0] = (float)rand() / RAND_MAX;
 	color[1] = 1.0f;
 	color[2] = 0.0f;
-	color[3] = 1.0f;
+	color[3] = 1.0f;*/
 
 	// Clear the back buffer.
-	m_pImmediateContext->ClearRenderTargetView(m_pRenderTargetView, color);
+	//mImmediateContext->ClearRenderTargetView(mRenderTargetView, color);
 
 
-	m_pImmediateContext->CSSetConstantBuffers(0, 1, &constant_bufer);
-	m_pImmediateContext->CSSetConstantBuffers(1, 1, &constant_bufer_camera);
 
+	//Compute the Scene!
 
-	// We now set up the shader and run it
-	m_pImmediateContext->CSSetShader(m_computeShader, NULL, 0);
+	mImmediateContext->CSSetConstantBuffers(0, 1, &mResConstantBuffer);
+	mImmediateContext->CSSetConstantBuffers(1, 1, &mCameraConstantBuffer);
+
 	//m_pImmediateContext->CSSetShaderResources( 0, 1, &m_srcDataGPUBufferView );
-	m_pImmediateContext->CSSetUnorderedAccessViews(0, 1, &m_destDataGPUBufferView, NULL);
+	mImmediateContext->CSSetUnorderedAccessViews(0, 1, &mCSDestDataBufferView, NULL);
+	mImmediateContext->CSSetShader(mComputeShader, NULL, 0);
 
 	const int threads_dim = 32;
-	m_pImmediateContext->Dispatch((gWidth + (threads_dim - 1)) / threads_dim, (gHeight + (threads_dim - 1)) / threads_dim, 1);
+	mImmediateContext->Dispatch((gWidth + (threads_dim - 1)) / threads_dim, (gHeight + (threads_dim - 1)) / threads_dim, 1);
 
-	m_pImmediateContext->CSSetShader(NULL, NULL, 0);
+	mImmediateContext->CSSetShader(NULL, NULL, 0);
 	ID3D11UnorderedAccessView* ppUAViewNULL[1] = { NULL };
 	ID3D11ShaderResourceView* ppSRVNULL[2] = { NULL, NULL };
-	m_pImmediateContext->CSSetUnorderedAccessViews(0, 1, ppUAViewNULL, NULL);
-	m_pImmediateContext->CSSetShaderResources(0, 2, ppSRVNULL);
+	mImmediateContext->CSSetUnorderedAccessViews(0, 1, ppUAViewNULL, NULL);
+	mImmediateContext->CSSetShaderResources(0, 2, ppSRVNULL);
 
 
 
@@ -568,38 +550,23 @@ void Render::DoFrame()
 
 
 	//render ray cast result to the back buffer
-	unsigned int stride;
-	unsigned int offset;
+	unsigned int stride = sizeof(VertexType);
+	unsigned int offset = 0;
+	mImmediateContext->IASetVertexBuffers(0, 1, &mVertexBuffer, &stride, &offset);
+	mImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	mImmediateContext->IASetInputLayout(mLayout);
 
-	// Set vertex buffer stride and offset.
-	stride = sizeof(VertexType);
-	offset = 0;
+	mImmediateContext->VSSetShader(mVertexShader, NULL, 0);
+	mImmediateContext->PSSetShader(mPixelShader, NULL, 0);
+	mImmediateContext->PSSetShaderResources(0, 1, &mDestDataSRV);
+	mImmediateContext->PSSetConstantBuffers(0, 1, &mResConstantBuffer);
 
-	// Set the vertex buffer to active in the input assembler so it can be rendered.
-	m_pImmediateContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
 
-	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	m_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	mImmediateContext->Draw(mVertexCount, 0); 	// Render the triangle.
 
-	m_pImmediateContext->IASetInputLayout(m_layout);
+	mImmediateContext->PSSetShaderResources(0, 1, ppSRVNULL);
 
-	// Set the vertex and pixel shaders that will be used to render this triangle.
-	m_pImmediateContext->VSSetShader(m_vertexShader, NULL, 0);
-	m_pImmediateContext->PSSetShader(m_pixelShader, NULL, 0);
-
-	// Set the sampler state in the pixel shader.
-	m_pImmediateContext->PSSetSamplers(0, 1, &m_sampleState);
-
-	m_pImmediateContext->PSSetShaderResources(0, 1, &m_destDataSRV);
-
-	m_pImmediateContext->PSSetConstantBuffers(0, 1, &constant_bufer);
-
-	// Render the triangle.
-	m_pImmediateContext->Draw(m_vertexCount, 0);
-
-	m_pImmediateContext->PSSetShaderResources(0, 1, ppSRVNULL);
-
-	m_pSwapChain->Present(0, 0);
+	mSwapChain->Present(0, 0);
 
 }
 

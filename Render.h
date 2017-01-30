@@ -27,37 +27,40 @@ private:
 
 
 
-	ID3D11Device*				m_pd3dDevice;
-	ID3D11DeviceContext*		m_pImmediateContext;
-	IDXGISwapChain*				m_pSwapChain;
-	ID3D11RenderTargetView*		m_pRenderTargetView;
+	ID3D11Device*				mD3DDevice;
+	ID3D11DeviceContext*		mImmediateContext;
+	IDXGISwapChain*				mSwapChain;
+
+	ID3D11RenderTargetView*		mRenderTargetView;
 
 	ID3D11Buffer*				m_srcDataGPUBuffer;
 	ID3D11ShaderResourceView*	m_srcDataGPUBufferView;
 
 
-	ID3D11Buffer* constant_bufer;
-	ID3D11Buffer* constant_bufer_camera;
+	ID3D11Buffer*				mResConstantBuffer;
+	ID3D11Buffer*				mCameraConstantBuffer;
 
 
 
-	ID3D11Buffer*				m_destDataGPUBuffer;
-	ID3D11UnorderedAccessView*	m_destDataGPUBufferView;
-	ID3D11ShaderResourceView*	m_destDataSRV;
-
-	ID3D11ComputeShader*		m_computeShader;
+	ID3D11Buffer*				mCSDestDataBuffer;
+	ID3D11UnorderedAccessView*	mCSDestDataBufferView;
+	ID3D11ShaderResourceView*	mDestDataSRV;
 
 
-	ID3D11VertexShader*			m_vertexShader;
-	ID3D11PixelShader*			m_pixelShader;
-	ID3D11InputLayout*			m_layout;
-	ID3D11Buffer*				m_matrixBuffer;
-	ID3D11SamplerState*			m_sampleState;
+	ID3D11ComputeShader*		mComputeShader;
 
-	ID3D11Buffer *m_vertexBuffer;
-	int m_vertexCount;
 
-	ID3D11RasterizerState*		m_rasterState;
+	ID3D11VertexShader*			mVertexShader;
+	ID3D11PixelShader*			mPixelShader;
+
+	ID3D11InputLayout*			mLayout;
+
+	//ID3D11SamplerState*			m_sampleState;
+
+	ID3D11Buffer *mVertexBuffer;
+	int mVertexCount;
+
+	ID3D11RasterizerState*		mRasterState;
 
 };
 

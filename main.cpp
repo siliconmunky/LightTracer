@@ -152,6 +152,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 		}
 
 
+		Input::Instance->SetInputMotion(IX_MOUSE_X, 0);
+		Input::Instance->SetInputMotion(IX_MOUSE_Y, 0);
+
 		// If windows signals to end the application then exit out.
 		if(msg.message == WM_QUIT)
 		{
