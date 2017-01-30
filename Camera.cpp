@@ -90,9 +90,9 @@ void Camera::MoveUpDown(float dist)
 void Camera::RotateLeftRight(float radians)
 //-------------------------------------------------------------------------------------------
 {
-    float mat[] = { cos(radians), 0, sin(radians), 
+    float mat[] = { cosf(radians), 0, sinf(radians), 
 				0, 1, 0, 
-				-sin(radians), 0, cos(radians)}; 
+				-sinf(radians), 0, cosf(radians)}; 
 
 	mView.mX = mat[0]*mView.mX + mat[1]*mView.mY + mat[2]*mView.mZ;
 	mView.mY = mat[3]*mView.mX + mat[4]*mView.mY + mat[5]*mView.mZ; 
@@ -116,9 +116,9 @@ void Camera::RotateUpDown(float radians)
 	float y = sideVec.mY;
 	float z = sideVec.mZ;
 
-    float mat[] = { (1+(1-cos(radians))*(x*x-1)), (-z*sin(radians)+(1-cos(radians))*x*y), (y*sin(radians)+(1-cos(radians))*x*z), 
-				(z*sin(radians)+(1-cos(radians))*x*y), (1 + (1-cos(radians))*(y*y-1)), (-x*sin(radians)+(1-cos(radians))*y*z), 
-				(-y*sin(radians)+(1-cos(radians))*x*z), (x*sin(radians)+(1-cos(radians))*y*z), (1 + (1-cos(radians))*(z*z-1))}; 
+    float mat[] = { (1.0f+(1.0f-cosf(radians))*(x*x-1.0f)), (-z*sinf(radians)+(1.0f-cosf(radians))*x*y), (y*sinf(radians)+(1.0f-cosf(radians))*x*z), 
+				(z*sinf(radians)+(1.0f-cosf(radians))*x*y), (1.0f + (1.0f-cosf(radians))*(y*y-1.0f)), (-x*sinf(radians)+(1.0f-cosf(radians))*y*z), 
+				(-y*sinf(radians)+(1.0f-cosf(radians))*x*z), (x*sinf(radians)+(1.0f-cosf(radians))*y*z), (1.0f + (1.0f-cosf(radians))*(z*z-1.0f))}; 
 
 	mView.mX = mat[0]*mView.mX + mat[1]*mView.mY + mat[2]*mView.mZ;
 	mView.mY = mat[3]*mView.mX + mat[4]*mView.mY + mat[5]*mView.mZ; 

@@ -46,7 +46,7 @@ void Scene::AddPointLight( Vector3 pos, ColourRGB colour, float size, int taps )
 {
 	for( int i = 0; i < taps; ++i )
 	{
-		ColourRGB point_colour = colour / taps;
+		ColourRGB point_colour = colour / (float)taps;
 		float x = size * (((float)rand() / RAND_MAX) - 0.5f);
 		float y = size * (((float)rand() / RAND_MAX) - 0.5f);
 		float z = size * (((float)rand() / RAND_MAX) - 0.5f);

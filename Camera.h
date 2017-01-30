@@ -7,6 +7,8 @@
 class Camera
 {
 public:
+	static Camera* Instance;
+
 	Camera();
 	~Camera();
 	
@@ -25,7 +27,6 @@ public:
 	void SetLookDir(const Vector3& lookDir);
 	void SetUpDir(const Vector3& upDir);
 	
-	static Camera* Instance;
 
 private:
 	Vector3	mPosition;

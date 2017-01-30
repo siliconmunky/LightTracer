@@ -35,7 +35,7 @@ public:
 	float operator ~() const
 	{
 		float temp = mX * mX + mY * mY + mZ * mZ;
-		return sqrt( temp );
+		return sqrtf( temp );
 	}
 	
 	//Normalize

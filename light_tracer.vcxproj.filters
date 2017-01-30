@@ -29,6 +29,12 @@
     <ClInclude Include="Matrix3x3.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Render.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="BasicDefs.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vector3.cpp">
@@ -59,6 +65,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Render.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
