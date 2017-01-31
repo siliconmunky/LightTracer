@@ -33,12 +33,13 @@ private:
 
 	ID3D11RenderTargetView*		mRenderTargetView;
 
-	ID3D11Buffer*				m_srcDataGPUBuffer;
-	ID3D11ShaderResourceView*	m_srcDataGPUBufferView;
+	ID3D11Buffer*				mSphereDataGPUBuffer;
+	ID3D11ShaderResourceView*	mSphereDataGPUBufferView;
 
 
 	ID3D11Buffer*				mResConstantBuffer;
 	ID3D11Buffer*				mCameraConstantBuffer;
+	ID3D11Buffer*				mPrimitivesConstantBuffer;
 
 
 

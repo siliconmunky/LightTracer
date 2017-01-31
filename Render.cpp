@@ -21,6 +21,15 @@ struct tPixel
 	float a;
 };
 
+
+struct tSphere
+{
+	D3DXVECTOR3 mPosition;
+	float mRadius;
+};
+
+
+
 __declspec(align(16)) struct tResolutionCB
 {
 	int width;
@@ -35,8 +44,14 @@ __declspec(align(16)) struct tCameraCB
 	float cam_orientation_20, cam_orientation_21, cam_orientation_22;
 };
 
+__declspec(align(16)) struct tPrimitiveCB
+{
+	int num_spheres;
+};
 
 
+
+const int MAX_SPHERES = 32;
 
 
 
@@ -127,13 +142,10 @@ bool Render::InitDevice()
 	D3D11_BUFFER_DESC input_descGPUBuffer;
 	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
 	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-	input_descGPUBuffer.ByteWidth = sizeof(tPixel);
+	input_descGPUBuffer.ByteWidth = sizeof(tSphere) * MAX_SPHERES;
 	input_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	input_descGPUBuffer.StructureByteStride = sizeof(tPixel);
-
-	D3D11_SUBRESOURCE_DATA InitData;
-	InitData.pSysMem = &colour;//THIS IS WHERE THE SCENE INFORMATION GOES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, &InitData, &m_srcDataGPUBuffer);
+	input_descGPUBuffer.StructureByteStride = sizeof(tSphere);
+	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mSphereDataGPUBuffer);
 	if (FAILED(hr))
 		return false;
 
@@ -142,9 +154,9 @@ bool Render::InitDevice()
 	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
 	input_descView.Format = DXGI_FORMAT_UNKNOWN;
 	input_descView.BufferEx.FirstElement = 0;
-	input_descView.BufferEx.NumElements = 1;
+	input_descView.BufferEx.NumElements = MAX_SPHERES;
 
-	if (FAILED(mD3DDevice->CreateShaderResourceView(m_srcDataGPUBuffer, &input_descView, &m_srcDataGPUBufferView)))
+	if (FAILED(mD3DDevice->CreateShaderResourceView(mSphereDataGPUBuffer, &input_descView, &mSphereDataGPUBufferView)))
 		return false;
 
 
@@ -482,6 +494,18 @@ bool Render::InitDevice()
 	}
 
 
+	D3D11_BUFFER_DESC bd_prims;
+	ZeroMemory(&bd_prims, sizeof(bd_prims));
+	bd_prims.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd_prims.ByteWidth = sizeof(tPrimitiveCB);
+	bd_prims.Usage = D3D11_USAGE_DEFAULT;
+	hr = mD3DDevice->CreateBuffer(&bd_prims, 0, &mPrimitivesConstantBuffer);
+	if (hr != S_OK)
+	{
+		return false;
+	}
+
+
 	return true;
 }
 
@@ -503,6 +527,22 @@ void Render::UpdateBuffers()
 	cb_camera.cam_orientation_20 = view_mat.m20; cb_camera.cam_orientation_21 = view_mat.m21; cb_camera.cam_orientation_22 = view_mat.m22;
 
 	mImmediateContext->UpdateSubresource(mCameraConstantBuffer, 0, 0, &cb_camera, 0, 0);
+
+
+	//STUBBED NUMBER OF PRIMS
+
+	tPrimitiveCB cb_prims;
+	cb_prims.num_spheres = 2;  
+
+	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
+
+	tSphere spheres[MAX_SPHERES];
+	spheres[0].mPosition = D3DXVECTOR3(2.0f, 0.0f, 4.0f);
+	spheres[0].mRadius = 0.5f;
+	spheres[1].mPosition = D3DXVECTOR3(0.0f, 0.0f, 5.0f);
+	spheres[1].mRadius = 1.0f;
+
+	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
 }
 
 
@@ -513,25 +553,14 @@ void Render::DoFrame()
 
 
 
-
-	/*float color[4];
-	color[0] = (float)rand() / RAND_MAX;
-	color[1] = 1.0f;
-	color[2] = 0.0f;
-	color[3] = 1.0f;*/
-
-	// Clear the back buffer.
-	//mImmediateContext->ClearRenderTargetView(mRenderTargetView, color);
-
-
-
 	//Compute the Scene!
-
 	mImmediateContext->CSSetConstantBuffers(0, 1, &mResConstantBuffer);
 	mImmediateContext->CSSetConstantBuffers(1, 1, &mCameraConstantBuffer);
+	mImmediateContext->CSSetConstantBuffers(2, 1, &mPrimitivesConstantBuffer);
+	mImmediateContext->CSSetShaderResources(0, 1, &mSphereDataGPUBufferView);
 
-	//m_pImmediateContext->CSSetShaderResources( 0, 1, &m_srcDataGPUBufferView );
 	mImmediateContext->CSSetUnorderedAccessViews(0, 1, &mCSDestDataBufferView, NULL);
+
 	mImmediateContext->CSSetShader(mComputeShader, NULL, 0);
 
 	const int threads_dim = 32;

@@ -97,11 +97,11 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 	//int num_lights = 0;
 	//PointLight** point_lights = Scene::Instance()->GetPointLights( num_lights );
 	
-	float3 c = 0;
+	float3 c = float3(0.1, 0.105, 0.12);
 	
 	PointLight light;
 	light.mPosition = float3( 1, 2, 3 );
-	light.mColour = float3( 0.7f, 0.6, 0.6f );
+	light.mColour = float3( 0.65f, 0.63, 0.6f );
 
 	//for( int i = 0; i < num_lights; ++i )
 	{
@@ -200,15 +200,30 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	ray.mPoint = cam_point;
 	ray.mDirection = ray_dir;
 
-	float distance = 0;
+	float near_dist = 999999.f;
+	int near_sphere_id = -1;
+
 	
-	Sphere sphere;
-	sphere.mPosition = float3( 0.0f, 0.0f, 5.0f );
-	sphere.mRadius = 1.0f;
-	
-	if( SphereIsHitByRay( sphere, ray, distance ) )
+	for( int i = 0; i < gNumSpheres; ++i )
 	{
-		pixel = SphereGetColourFromRay( sphere, ray );
+		float distance = 0;
+		if (SphereIsHitByRay(SphereBuffer[i], ray, distance))
+		{
+			if (distance < near_dist)
+			{
+				near_sphere_id = i;
+				near_dist = distance;
+			}
+		}
+	}
+	if (near_sphere_id >= 0)
+	{
+		pixel = SphereGetColourFromRay(SphereBuffer[near_sphere_id], ray);
+	}
+	else
+	{
+		float x = ray.mDirection.y;
+		pixel = float3(x, x, x);
 	}
 	
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );
