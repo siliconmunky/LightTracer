@@ -66,8 +66,8 @@ void Game::HandleInput(float dt)
 		mCam.StrafeLeftRight(1.0f*dt);
 	}
 
-	static float x_sensitivity = 0.1f;
-	static float y_sensitivity = 0.1f;
-	mCam.RotateLeftRight(mInput.GetInputMotion(IX_MOUSE_X) * x_sensitivity*dt);
-	mCam.RotateUpDown(-mInput.GetInputMotion(IX_MOUSE_Y) * x_sensitivity*dt);
+	static float x_sensitivity = 0.0006f;
+	static float y_sensitivity = 0.0006f;
+	mCam.RotateLeftRight(mInput.GetInputMotion(IX_MOUSE_X) * x_sensitivity);
+	mCam.RotateUpDown(-mInput.GetInputMotion(IX_MOUSE_Y) * x_sensitivity);
 }

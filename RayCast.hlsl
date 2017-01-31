@@ -193,7 +193,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	gCameraOrientation._m20 = cam_orientation_20; gCameraOrientation._m21 = cam_orientation_21; gCameraOrientation._m22 = cam_orientation_22;
 
 	ray_dir = mul( gCameraOrientation, ray_dir);
-	ray_dir = normalize(ray_dir);
+	//ray_dir = normalize(ray_dir);
 
 
 	Ray ray;

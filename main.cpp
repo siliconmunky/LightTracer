@@ -138,7 +138,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
 	//init the mouse position so we don't spike on boot
 	SetCursorPos(mid_width, mid_height);
-
+	ShowCursor(false);
 
 	bool done = false;
 	while( !done )
