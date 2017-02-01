@@ -179,18 +179,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
 			case WM_MOUSEMOVE:
 			{
-				POINT pos_m;
-				GetCursorPos(&pos_m);
-				int x_pos = pos_m.x;
-				int y_pos = pos_m.y;
+				if (gHWnd == GetForegroundWindow())
+				{
+					POINT pos_m;
+					GetCursorPos(&pos_m);
+					int x_pos = pos_m.x;
+					int y_pos = pos_m.y;
 
-				SetCursorPos(mid_width, mid_height);
-				
-				float x_move = (float)(x_pos - mid_width);
-				float y_move = (float)(y_pos - mid_height);
+					SetCursorPos(mid_width, mid_height);
 
-				Input::Instance->SetInputMotion(IX_MOUSE_X, x_move);
-				Input::Instance->SetInputMotion(IX_MOUSE_Y, y_move);
+					float x_move = (float)(x_pos - mid_width);
+					float y_move = (float)(y_pos - mid_height);
+
+					Input::Instance->SetInputMotion(IX_MOUSE_X, x_move);
+					Input::Instance->SetInputMotion(IX_MOUSE_Y, y_move);
+				}
 			}
 			break;
 		}
@@ -199,7 +202,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 		game->GameLoop();
 	}
 	
-
 	
     return 0;
 }

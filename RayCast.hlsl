@@ -21,7 +21,11 @@ struct Sphere
 	float mRadius;
 };
 
-
+struct RayCastResult
+{
+	int mNearestSphereID;
+	float mCollisionDistance;
+};
 
 
 
@@ -59,6 +63,64 @@ void writeToPixel(int x, int y, float3 colour)
     BufferOut[index].mColour = float4( colour, 1 );
 }
 
+
+
+bool SphereIsHitByRay(Sphere sphere, Ray ray, inout float distance)
+{
+	float3 to_sphere = sphere.mPosition - ray.mPoint;
+	float dot_p = dot(to_sphere, ray.mDirection);
+
+	if (dot_p < 0.0f)
+	{
+		return false;
+	}
+
+	float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
+	float3 sphere_to_ray = point_on_ray - sphere.mPosition;
+	float dist_to_ray = length(sphere_to_ray);
+
+	bool sphere_hit = dist_to_ray < sphere.mRadius;
+
+	if (sphere_hit)
+	{
+		//calc distance to surface
+		float length_sphere_to_ray = length(sphere_to_ray);
+		float length_back = sqrt(sphere.mRadius * sphere.mRadius - length_sphere_to_ray * length_sphere_to_ray);
+		float3 point_on_surface = point_on_ray - (ray.mDirection * length_back);
+
+		distance = length(point_on_surface - ray.mPoint);
+	}
+
+	return sphere_hit;
+}
+
+RayCastResult FindNearestCollision(Ray ray)
+{
+	float near_dist = 999999.f;
+	int near_sphere_id = -1;
+	for (int i = 0; i < gNumSpheres; ++i)
+	{
+		float distance = 0;
+		if (SphereIsHitByRay(SphereBuffer[i], ray, distance))
+		{
+			if (distance < near_dist)
+			{
+				near_sphere_id = i;
+				near_dist = distance;
+			}
+		}
+	}
+
+	//DO PLANES AND CONES AND SHIT HERE
+
+
+
+	RayCastResult res;
+	res.mNearestSphereID = near_sphere_id;
+	res.mCollisionDistance = near_dist;
+
+	return res;
+}
 
 float OrenNayerDiffuse( float3 light, float3 view, float3 normal, float roughness )
 {
@@ -109,11 +171,12 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		float light_distance = length(to_light);
 		to_light = normalize(to_light);
 
-		//float collision_distance = 0.0f;
-		//Ray light_ray( point, to_light, 0 );
-		//Shape* collider = Scene::Instance()->NearestCollision( light_ray, collision_distance );
+		Ray ray;
+		ray.mPoint = position;
+		ray.mDirection = to_light;
+		RayCastResult res = FindNearestCollision(ray);
 
-		//if( collider == 0 || light_distance < collision_distance )
+		if(res.mNearestSphereID == 0 || light_distance < res.mCollisionDistance )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 
@@ -128,34 +191,6 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 
 
 
-bool SphereIsHitByRay( Sphere sphere, Ray ray, inout float distance )
-{	
-	float3 to_sphere = sphere.mPosition - ray.mPoint;
-	float dot_p = dot( to_sphere, ray.mDirection );
-	
-	if( dot_p < 0.0f )
-	{
-		return false;
-	}
-	
-	float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
-	float3 sphere_to_ray = point_on_ray - sphere.mPosition;
-	float dist_to_ray = length(sphere_to_ray);
-	
-	bool sphere_hit = dist_to_ray < sphere.mRadius;
-	
-	if( sphere_hit )
-	{
-		//calc distance to surface
-		float length_sphere_to_ray = length(sphere_to_ray);
-		float length_back = sqrt( sphere.mRadius * sphere.mRadius - length_sphere_to_ray * length_sphere_to_ray );
-		float3 point_on_surface = point_on_ray - (ray.mDirection * length_back);
-
-		distance = length(point_on_ray - ray.mPoint);
-	}
-	
-	return sphere_hit;
-}
 
 float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
 {	
@@ -165,6 +200,7 @@ float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
 	float3 sphere_to_ray = point_on_ray - sphere.mPosition;
 
 	float length_sphere_to_ray = length(sphere_to_ray);
+
 	float length_back = sqrt( sphere.mRadius * sphere.mRadius - length_sphere_to_ray * length_sphere_to_ray );
 	float3 point_on_surface = point_on_ray - (ray.mDirection * length_back);
 	float3 normal = normalize(point_on_surface - sphere.mPosition);
@@ -172,12 +208,15 @@ float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
 	return CalculateLighting( point_on_surface, normal, ray.mDirection );
 }
 
+
+
+
+
+
 [numthreads(32, 32, 1)]
 void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 {
-	float3 pixel = float3(0,0,0);
-
-	float3 cam_point = gCameraPosition;
+	//Setup ray for this pixel
 	float3 direction = float3( 0, 0, 1 );
 	float aspect = (float)gWidth / gHeight;
 	float fov = 0.75f;
@@ -193,32 +232,22 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	gCameraOrientation._m20 = cam_orientation_20; gCameraOrientation._m21 = cam_orientation_21; gCameraOrientation._m22 = cam_orientation_22;
 
 	ray_dir = mul( gCameraOrientation, ray_dir);
-	//ray_dir = normalize(ray_dir);
-
 
 	Ray ray;
-	ray.mPoint = cam_point;
+	ray.mPoint = gCameraPosition;
 	ray.mDirection = ray_dir;
 
-	float near_dist = 999999.f;
-	int near_sphere_id = -1;
 
-	
-	for( int i = 0; i < gNumSpheres; ++i )
+	//Find the nearest primitive
+	RayCastResult res = FindNearestCollision(ray);
+
+
+
+	//Get the lighting from the nearest primitive
+	float3 pixel = float3(0, 0, 0);
+	if (res.mNearestSphereID >= 0)
 	{
-		float distance = 0;
-		if (SphereIsHitByRay(SphereBuffer[i], ray, distance))
-		{
-			if (distance < near_dist)
-			{
-				near_sphere_id = i;
-				near_dist = distance;
-			}
-		}
-	}
-	if (near_sphere_id >= 0)
-	{
-		pixel = SphereGetColourFromRay(SphereBuffer[near_sphere_id], ray);
+		pixel = SphereGetColourFromRay(SphereBuffer[res.mNearestSphereID], ray);
 	}
 	else
 	{
@@ -226,5 +255,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 		pixel = float3(x, x, x);
 	}
 	
+
+
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );
 }

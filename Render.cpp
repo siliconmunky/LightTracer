@@ -1,5 +1,7 @@
 #include "Render.h"
 
+#include "Game.h"
+
 #include "Camera.h"
 
 
@@ -532,15 +534,17 @@ void Render::UpdateBuffers()
 	//STUBBED NUMBER OF PRIMS
 
 	tPrimitiveCB cb_prims;
-	cb_prims.num_spheres = 2;  
+	cb_prims.num_spheres = 3;  
 
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
 	tSphere spheres[MAX_SPHERES];
-	spheres[0].mPosition = D3DXVECTOR3(2.0f, 0.0f, 4.0f);
+	spheres[0].mPosition = D3DXVECTOR3(2.0f, -1.0f, 4.0f);
 	spheres[0].mRadius = 0.5f;
-	spheres[1].mPosition = D3DXVECTOR3(0.0f, 0.0f, 5.0f);
+	spheres[1].mPosition = D3DXVECTOR3(0.0f, -1.0f, 5.0f);
 	spheres[1].mRadius = 1.0f;
+	spheres[2].mPosition = D3DXVECTOR3(1.0f, 1.5f*sinf(Game::Instance->GetTime()), 4.0f);
+	spheres[2].mRadius = 0.75f;
 
 	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
 }

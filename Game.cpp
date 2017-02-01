@@ -19,7 +19,10 @@ Game::Game()
 	mCam.SetLookDir(Vector3(0, 0, 1));
 	mCam.SetUpDir(Vector3(0, 1, 0));
 
-	mPrevFrame = std::clock();
+	mGameStartTime = std::clock();
+	mPrevFrameTime = std::clock();
+
+	
 
 	Scene::Init(); //IS TIHS USED AT THE MOMENT?
 }
@@ -32,8 +35,8 @@ Game::~Game()
 void Game::GameLoop()
 {
 	std::clock_t now = std::clock();
-	float dt = float(now - mPrevFrame) / CLOCKS_PER_SEC;
-	mPrevFrame = now;
+	float dt = float(now - mPrevFrameTime) / CLOCKS_PER_SEC;
+	mPrevFrameTime = now;
 
 
 	HandleInput(dt);
@@ -44,26 +47,33 @@ void Game::GameLoop()
 }
 
 
+float Game::GetTime()
+{
+	std::clock_t now = std::clock();
+	float elapsed = float(now - mGameStartTime) / CLOCKS_PER_SEC;
+	return elapsed;
+}
 
 
 void Game::HandleInput(float dt)
-{	
+{
+	static float move_sens = 2.5f;
 	if( mInput.IsKeyDown(IX_KEY_W) )
 	{
-		mCam.MoveForwardBack(1.0f*dt);
+		mCam.MoveForwardBack(move_sens*dt);
 	}
 	if (mInput.IsKeyDown(IX_KEY_S))
 	{
-		mCam.MoveForwardBack(-1.0f*dt);
+		mCam.MoveForwardBack(-move_sens*dt);
 	}
 
 	if (mInput.IsKeyDown(IX_KEY_A))
 	{
-		mCam.StrafeLeftRight(-1.0f*dt);
+		mCam.StrafeLeftRight(-move_sens*dt);
 	}
 	if (mInput.IsKeyDown(IX_KEY_D))
 	{
-		mCam.StrafeLeftRight(1.0f*dt);
+		mCam.StrafeLeftRight(move_sens*dt);
 	}
 
 	static float x_sensitivity = 0.0006f;

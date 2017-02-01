@@ -19,14 +19,18 @@ public:
 
 	void GameLoop();
 	
-
 	void HandleInput(float dt);
+
+	float GetTime();
+
+
 
 	Input mInput;
 	Camera mCam;
 	Render mRender;
 
 private:
-	std::clock_t mPrevFrame;
+	std::clock_t mGameStartTime;
+	std::clock_t mPrevFrameTime;
 };
 
