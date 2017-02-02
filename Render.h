@@ -31,6 +31,7 @@ private:
 	IDXGISwapChain*				mSwapChain;
 
 	ID3D11RenderTargetView*		mRenderTargetView;
+	ID3D11RasterizerState*		mRasterState;
 
 
 	ID3D11Buffer*				mSphereDataGPUBuffer;
@@ -53,17 +54,14 @@ private:
 	ID3D11ComputeShader*		mComputeShader;
 
 
-	ID3D11VertexShader*			mVertexShader;
-	ID3D11PixelShader*			mPixelShader;
+
 
 	ID3D11InputLayout*			mLayout;
-
-	//ID3D11SamplerState*			m_sampleState;
-
 	ID3D11Buffer *mVertexBuffer;
 	int mVertexCount;
+	ID3D11VertexShader*			mVertexShader;
 
-	ID3D11RasterizerState*		mRasterState;
+	ID3D11PixelShader*			mPixelShader;
 
 };
 
