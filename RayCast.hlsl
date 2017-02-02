@@ -214,7 +214,7 @@ float3 LightPassThroughGlow(Ray ray)
 			if (dist_to_ray < 0.1f)
 			{
 				float f = lerp(1,0, dist_to_ray*10);
-				contribution += float3(f, f, f);
+				contribution += LightBuffer[i].mColour * f;
 			}
 		}
 	}

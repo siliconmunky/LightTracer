@@ -495,21 +495,25 @@ void Render::UpdateBuffers()
 	//STUBBED NUMBER OF PRIMS
 
 	tPrimitiveCB cb_prims;
-	cb_prims.num_lights = 1;
+	cb_prims.num_lights = 4;
 	cb_prims.num_spheres = 3;
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
 
 	tPointLight lights[MAX_LIGHTS];
-	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 3.0f, 3.0f + sinf(Game::Instance->GetTime()));
+	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 3.4f, 3.0f + sinf(Game::Instance->GetTime()));
 	lights[0].mColour = Vector3(0.55f, 0.55, 0.55f);
-	/*lights[1].mPosition = Vector3(1.01f, 3.0f, 3.0f);
-	lights[1].mColour = Vector3(0.25f, 0.23, 0.2f);
-	lights[2].mPosition = Vector3(1.0f, 3.0f, 3.01f);
-	lights[2].mColour = Vector3(0.325f, 0.23, 0.2f);
-	lights[3].mPosition = Vector3(1.01f, 3.0f, 3.01f);
-	lights[3].mColour = Vector3(0.25f, 0.23, 0.2f);*/
+
+	lights[1].mPosition = Vector3(cosf(Game::Instance->GetTime()), 3.0f, 1.0f);
+	lights[1].mColour = Vector3(0.65f, 0.23, 0.2f);
+
+	lights[2].mPosition = Vector3(1.0f, 5 + sinf(Game::Instance->GetTime()*4), 3.01f);
+	lights[2].mColour = Vector3(0.125f, 0.73, 0.1f);
+
+	lights[3].mPosition = Vector3(sinf(Game::Instance->GetTime() * 0.25f), 3.0f + cosf(Game::Instance->GetTime()*0.4f), 3.01f);
+	lights[3].mColour = Vector3(0.05f, 0.03, 0.4f);
 	mImmediateContext->UpdateSubresource(mLightDataGPUBuffer, 0, 0, &lights, sizeof(tPointLight), MAX_LIGHTS * sizeof(tPointLight));
+	
 
 	tSphere spheres[MAX_SPHERES];
 	spheres[0].mPosition = Vector3(2.0f, -1.0f, 4.0f);
