@@ -86,8 +86,7 @@ bool SphereIsHitByRay(Sphere sphere, Ray ray, inout float distance)
 	if (sphere_hit)
 	{
 		//calc distance to surface
-		float length_sphere_to_ray = length(sphere_to_ray);
-		float length_back = sqrt(sphere.mRadius * sphere.mRadius - length_sphere_to_ray * length_sphere_to_ray);
+		float length_back = sqrt(sphere.mRadius * sphere.mRadius - dist_to_ray * dist_to_ray);
 		float3 point_on_surface = point_on_ray - (ray.mDirection * length_back);
 
 		distance = length(point_on_surface - ray.mPoint);
@@ -154,6 +153,7 @@ float OrenNayerDiffuse( float3 light, float3 view, float3 normal, float roughnes
 
 	return output;
 }
+
 float3 CalculateLighting( float3 position, float3 normal, float3 view )
 {
 	//get all the lights, loop over them and test for vision	
@@ -174,20 +174,15 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 
-			c = c + LightBuffer[i].mColour * diffuse;
+			c = c + LightBuffer[i].mColour * diffuse; //QUADRATIC FALLOF HERE?
 		}
 	}
 
 	return c;
 }
 
-
-
-
-
-
 float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
-{	
+{
 	float3 to_sphere = sphere.mPosition - ray.mPoint;
 	float dot_p = dot( to_sphere, ray.mDirection );
 	float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
@@ -202,9 +197,29 @@ float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
 	return CalculateLighting( point_on_surface, normal, ray.mDirection );
 }
 
+float3 LightPassThroughGlow(Ray ray)
+{
+	float3 contribution = 0;
+	for (int i = 0; i < gNumLights; ++i)
+	{
+		float3 to_light = LightBuffer[i].mPosition - ray.mPoint;
+		float dot_p = dot(to_light, ray.mDirection);
 
+		if (dot_p > 0.0f)
+		{
+			float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
+			float3 light_to_ray = point_on_ray - LightBuffer[i].mPosition;
+			float dist_to_ray = length(light_to_ray);
 
-
+			if (dist_to_ray < 0.1f)
+			{
+				float f = lerp(1,0, dist_to_ray*10);
+				contribution += float3(f, f, f);
+			}
+		}
+	}
+	return contribution;
+}
 
 
 [numthreads(32, 32, 1)]
@@ -248,7 +263,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 		float x = ray.mDirection.y;
 		pixel = float3(x, x, x);
 	}
-	
+	pixel += LightPassThroughGlow(ray);
 
 
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );
