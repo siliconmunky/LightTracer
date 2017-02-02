@@ -46,10 +46,12 @@ cbuffer ConstantBufferCamera : register(cb1)
 
 cbuffer ConstantBufferPrimitives : register(cb2)
 {
+	int gNumLights;
 	int gNumSpheres;
 };
 
-StructuredBuffer<Sphere> SphereBuffer : register(t0);
+StructuredBuffer<PointLight> LightBuffer : register(t0);
+StructuredBuffer<Sphere> SphereBuffer : register(t1);
 
 
 RWStructuredBuffer<Pixel> BufferOut : register(u0);
@@ -154,20 +156,12 @@ float OrenNayerDiffuse( float3 light, float3 view, float3 normal, float roughnes
 }
 float3 CalculateLighting( float3 position, float3 normal, float3 view )
 {
-	//get all the lights, loop over them and test for vision
-
-	//int num_lights = 0;
-	//PointLight** point_lights = Scene::Instance()->GetPointLights( num_lights );
-	
+	//get all the lights, loop over them and test for vision	
 	float3 c = float3(0.1, 0.105, 0.12);
-	
-	PointLight light;
-	light.mPosition = float3( 1, 2, 3 );
-	light.mColour = float3( 0.65f, 0.63, 0.6f );
 
-	//for( int i = 0; i < num_lights; ++i )
+	for( int i = 0; i < gNumLights; ++i )
 	{
-		float3 to_light = light.mPosition - position;
+		float3 to_light = LightBuffer[i].mPosition - position;
 		float light_distance = length(to_light);
 		to_light = normalize(to_light);
 
@@ -180,7 +174,7 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 
-			c = c + light.mColour * diffuse;
+			c = c + LightBuffer[i].mColour * diffuse;
 		}
 	}
 

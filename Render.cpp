@@ -9,9 +9,8 @@
 
 struct VertexType
 {
-	D3DXVECTOR3 position;
-	D3DXVECTOR4 color;
-	D3DXVECTOR4 uv;
+	Vector3 position;
+	float u; float v;
 };
 
 
@@ -24,9 +23,16 @@ struct tPixel
 };
 
 
+
+struct tPointLight
+{
+	Vector3 mPosition;
+	Vector3 mColour;
+};
+
 struct tSphere
 {
-	D3DXVECTOR3 mPosition;
+	Vector3 mPosition;
 	float mRadius;
 };
 
@@ -40,7 +46,7 @@ __declspec(align(16)) struct tResolutionCB
 
 __declspec(align(16)) struct tCameraCB
 {
-	float cam_pos_x, cam_pos_y, cam_pos_z; //gCameraPosition
+	float cam_pos_x, cam_pos_y, cam_pos_z;
 	float cam_orientation_00, cam_orientation_01, cam_orientation_02;
 	float cam_orientation_10, cam_orientation_11, cam_orientation_12;
 	float cam_orientation_20, cam_orientation_21, cam_orientation_22;
@@ -48,11 +54,13 @@ __declspec(align(16)) struct tCameraCB
 
 __declspec(align(16)) struct tPrimitiveCB
 {
+	int num_lights;
 	int num_spheres;
 };
 
 
 
+const int MAX_LIGHTS = 32;
 const int MAX_SPHERES = 32;
 
 
@@ -132,15 +140,10 @@ bool Render::InitDevice()
 
 
 	////////////////////////////////////////
-	// INPUT SCENE BUFFER
+	// INPUT SCENE BUFFERS
 	////////////////////////////////////////
-
-	tPixel colour;
-	colour.r = 0.0f;
-	colour.g = 0.0f;
-	colour.b = 0.0f;
-
-	// First we create a buffer in GPU memory
+	
+	//Sphere
 	D3D11_BUFFER_DESC input_descGPUBuffer;
 	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
 	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
@@ -150,16 +153,34 @@ bool Render::InitDevice()
 	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mSphereDataGPUBuffer);
 	if (FAILED(hr))
 		return false;
-
 	D3D11_SHADER_RESOURCE_VIEW_DESC input_descView;
 	ZeroMemory(&input_descView, sizeof(input_descView));
 	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
 	input_descView.Format = DXGI_FORMAT_UNKNOWN;
 	input_descView.BufferEx.FirstElement = 0;
 	input_descView.BufferEx.NumElements = MAX_SPHERES;
-
 	if (FAILED(mD3DDevice->CreateShaderResourceView(mSphereDataGPUBuffer, &input_descView, &mSphereDataGPUBufferView)))
 		return false;
+
+
+	//Light
+	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
+	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	input_descGPUBuffer.ByteWidth = sizeof(tPointLight) * MAX_SPHERES;
+	input_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	input_descGPUBuffer.StructureByteStride = sizeof(tPointLight);
+	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mLightDataGPUBuffer);
+	if (FAILED(hr))
+		return false;
+
+	ZeroMemory(&input_descView, sizeof(input_descView));
+	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+	input_descView.Format = DXGI_FORMAT_UNKNOWN;
+	input_descView.BufferEx.FirstElement = 0;
+	input_descView.BufferEx.NumElements = MAX_LIGHTS;
+	if (FAILED(mD3DDevice->CreateShaderResourceView(mLightDataGPUBuffer, &input_descView, &mLightDataGPUBufferView)))
+		return false;
+
 
 
 
@@ -240,62 +261,32 @@ bool Render::InitDevice()
 	ID3D10Blob* errorMessage;
 	ID3D10Blob* vertexShaderBuffer;
 	ID3D10Blob* pixelShaderBuffer;
-	D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
+	D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
 	unsigned int numElements;
-	//D3D11_BUFFER_DESC matrixBufferDesc;
-
-	//D3D11_SAMPLER_DESC samplerDesc;
 
 	// Initialize the pointers this function will use to null.
 	errorMessage = 0;
 	vertexShaderBuffer = 0;
 	pixelShaderBuffer = 0;
 
-	// Compile the vertex shader code.
-	hr = D3DX11CompileFromFile(L"Color.vs", NULL, NULL, "ColorVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL,
-		&vertexShaderBuffer, &errorMessage, NULL);
+	// Compile the vertex shader code and Create the vertex shader from the buffer.
+	hr = D3DX11CompileFromFile(L"Color.vs", NULL, NULL, "ColorVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &vertexShaderBuffer, &errorMessage, NULL);
 	if (FAILED(hr))
 	{
-		// If the shader failed to compile it should have writen something to the error message.
-		/*if(errorMessage)
-		{
-		//OutputShaderErrorMessage(errorMessage, hwnd, vsFilename);
-		}
-		// If there was  nothing in the error message then it simply could not find the shader file itself.
-		else
-		{
-		//MessageBox(hwnd, vsFilename, L"Missing Shader File", MB_OK);
-		}*/
-
 		return false;
 	}
-
-	// Compile the pixel shader code.
-	hr = D3DX11CompileFromFile(L"Color.ps", NULL, NULL, "ColorPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL,
-		&pixelShaderBuffer, &errorMessage, NULL);
-	if (FAILED(hr))
-	{
-		// If the shader failed to compile it should have writen something to the error message.
-		/*if(errorMessage)
-		{
-		OutputShaderErrorMessage(errorMessage, hwnd, psFilename);
-		}
-		// If there was nothing in the error message then it simply could not find the file itself.
-		else
-		{
-		MessageBox(hwnd, psFilename, L"Missing Shader File", MB_OK);
-		}*/
-		return false;
-	}
-
-	// Create the vertex shader from the buffer.
 	hr = mD3DDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &mVertexShader);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
-	// Create the pixel shader from the buffer.
+	// Compile the pixel shader code and Create the pixel shader from the buffer.
+	hr = D3DX11CompileFromFile(L"Color.ps", NULL, NULL, "ColorPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &pixelShaderBuffer, &errorMessage, NULL);
+	if (FAILED(hr))
+	{
+		return false;
+	}
 	hr = mD3DDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &mPixelShader);
 	if (FAILED(hr))
 	{
@@ -312,21 +303,13 @@ bool Render::InitDevice()
 	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[0].InstanceDataStepRate = 0;
 
-	polygonLayout[1].SemanticName = "COLOR";
+	polygonLayout[1].SemanticName = "TEXCOORD";
 	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	polygonLayout[1].InputSlot = 0;
 	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[1].InstanceDataStepRate = 0;
-
-	polygonLayout[2].SemanticName = "TEXCOORD";
-	polygonLayout[2].SemanticIndex = 0;
-	polygonLayout[2].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	polygonLayout[2].InputSlot = 0;
-	polygonLayout[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	polygonLayout[2].InstanceDataStepRate = 0;
 
 	// Get a count of the elements in the layout.
 	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
@@ -347,28 +330,6 @@ bool Render::InitDevice()
 	pixelShaderBuffer = 0;
 
 
-	// Create a texture sampler state description.
-	/*samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerDesc.BorderColor[0] = 0;
-	samplerDesc.BorderColor[1] = 0;
-	samplerDesc.BorderColor[2] = 0;
-	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Create the texture sampler state.
-	hr = mD3DDevice->CreateSamplerState(&samplerDesc, &m_sampleState);
-	if (FAILED(hr))
-	{
-		return false;
-	}*/
-
 
 
 	/////////////////Create vertex and index buffers
@@ -387,21 +348,21 @@ bool Render::InitDevice()
 	}
 
 	// Load the vertex array with data.
-	vertices[0].position = D3DXVECTOR3(-1.0f, 1.0f, 0.5f);  // Bottom left.
-	vertices[0].color = D3DXVECTOR4(0.0f, 1.0f, 0.0f, 1.0f);
-	vertices[0].uv = D3DXVECTOR4(0.0f, 0.0f, 0.0f, 0.0f);
+	vertices[0].position = Vector3(-1.0f, 1.0f, 0.5f);  // Bottom left.
+	vertices[0].u = 0.0f;
+	vertices[0].v = 0.0f;
 
-	vertices[1].position = D3DXVECTOR3(1.0f, 1.0f, 0.5f);  // Bottom right.
-	vertices[1].color = D3DXVECTOR4(0.0f, 1.0f, 0.0f, 1.0f);
-	vertices[1].uv = D3DXVECTOR4(1.0f, 0.0f, 0.0f, 0.0f);
+	vertices[1].position = Vector3(1.0f, 1.0f, 0.5f);  // Bottom right.
+	vertices[1].u = 1.0f;
+	vertices[1].v = 0.0f;
 
-	vertices[2].position = D3DXVECTOR3(-1.0f, -1.0f, 0.5f);  // Top left.
-	vertices[2].color = D3DXVECTOR4(0.0f, 1.0f, 0.0f, 1.0f);
-	vertices[2].uv = D3DXVECTOR4(0.0f, 1.0f, 0.0f, 0.0f);
+	vertices[2].position = Vector3(-1.0f, -1.0f, 0.5f);  // Top left.
+	vertices[2].u = 0.0f;
+	vertices[2].v = 1.0f;
 
-	vertices[3].position = D3DXVECTOR3(1.0f, -1.0f, 0.5f);  // Top right.
-	vertices[3].color = D3DXVECTOR4(0.0f, 1.0f, 0.0f, 1.0f);
-	vertices[3].uv = D3DXVECTOR4(1.0f, 1.0f, 0.0f, 0.0f);
+	vertices[3].position = Vector3(1.0f, -1.0f, 0.5f);  // Top right.
+	vertices[3].u = 1.0f;
+	vertices[3].v = 1.0f;
 
 
 	// Set up the description of the static vertex buffer.
@@ -475,10 +436,10 @@ bool Render::InitDevice()
 	{
 		return false;
 	}
+
 	tResolutionCB cb;
 	cb.width = gWidth;
 	cb.height = gHeight;
-
 	mImmediateContext->UpdateSubresource(mResConstantBuffer, 0, 0, &cb, 0, 0);
 
 
@@ -534,19 +495,30 @@ void Render::UpdateBuffers()
 	//STUBBED NUMBER OF PRIMS
 
 	tPrimitiveCB cb_prims;
-	cb_prims.num_spheres = 3;  
-
+	cb_prims.num_lights = 1;
+	cb_prims.num_spheres = 3;
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
 	tSphere spheres[MAX_SPHERES];
-	spheres[0].mPosition = D3DXVECTOR3(2.0f, -1.0f, 4.0f);
+	spheres[0].mPosition = Vector3(2.0f, -1.0f, 4.0f);
 	spheres[0].mRadius = 0.5f;
-	spheres[1].mPosition = D3DXVECTOR3(0.0f, -1.0f, 5.0f);
+	spheres[1].mPosition = Vector3(0.0f, -1.0f, 5.0f);
 	spheres[1].mRadius = 1.0f;
-	spheres[2].mPosition = D3DXVECTOR3(1.0f, 1.5f*sinf(Game::Instance->GetTime()), 4.0f);
+	spheres[2].mPosition = Vector3(1.0f, 0.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
 	spheres[2].mRadius = 0.75f;
-
 	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
+
+
+	tPointLight lights[MAX_LIGHTS];
+	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 3.0f, 3.0f + sinf(Game::Instance->GetTime()));
+	lights[0].mColour = Vector3(0.55f, 0.55, 0.55f);
+	/*lights[1].mPosition = Vector3(1.01f, 3.0f, 3.0f);
+	lights[1].mColour = Vector3(0.25f, 0.23, 0.2f);
+	lights[2].mPosition = Vector3(1.0f, 3.0f, 3.01f);
+	lights[2].mColour = Vector3(0.325f, 0.23, 0.2f);
+	lights[3].mPosition = Vector3(1.01f, 3.0f, 3.01f);
+	lights[3].mColour = Vector3(0.25f, 0.23, 0.2f);*/
+	mImmediateContext->UpdateSubresource(mLightDataGPUBuffer, 0, 0, &lights, sizeof(tPointLight), MAX_LIGHTS * sizeof(tPointLight));
 }
 
 
@@ -561,7 +533,8 @@ void Render::DoFrame()
 	mImmediateContext->CSSetConstantBuffers(0, 1, &mResConstantBuffer);
 	mImmediateContext->CSSetConstantBuffers(1, 1, &mCameraConstantBuffer);
 	mImmediateContext->CSSetConstantBuffers(2, 1, &mPrimitivesConstantBuffer);
-	mImmediateContext->CSSetShaderResources(0, 1, &mSphereDataGPUBufferView);
+	mImmediateContext->CSSetShaderResources(0, 1, &mLightDataGPUBufferView);
+	mImmediateContext->CSSetShaderResources(1, 1, &mSphereDataGPUBufferView);
 
 	mImmediateContext->CSSetUnorderedAccessViews(0, 1, &mCSDestDataBufferView, NULL);
 

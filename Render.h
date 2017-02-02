@@ -5,7 +5,6 @@
 
 #include <d3d11.h>
 #include <d3dx11.h>
-#include <d3dx10math.h>
 #include "D3DCompiler.h"
 
 
@@ -33,8 +32,11 @@ private:
 
 	ID3D11RenderTargetView*		mRenderTargetView;
 
+
 	ID3D11Buffer*				mSphereDataGPUBuffer;
 	ID3D11ShaderResourceView*	mSphereDataGPUBufferView;
+	ID3D11Buffer*				mLightDataGPUBuffer;
+	ID3D11ShaderResourceView*	mLightDataGPUBufferView;
 
 
 	ID3D11Buffer*				mResConstantBuffer;
