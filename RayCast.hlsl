@@ -21,9 +21,17 @@ struct Sphere
 	float mRadius;
 };
 
+struct Tri
+{
+	float3 mV0;
+	float3 mV1;
+	float3 mV2;
+};
+
 struct RayCastResult
 {
 	int mNearestSphereID;
+	int mNearestTriID;
 	float mCollisionDistance;
 };
 
@@ -48,10 +56,12 @@ cbuffer ConstantBufferPrimitives : register(cb2)
 {
 	int gNumLights;
 	int gNumSpheres;
+	int gNumTris;
 };
 
 StructuredBuffer<PointLight> LightBuffer : register(t0);
 StructuredBuffer<Sphere> SphereBuffer : register(t1);
+StructuredBuffer<Tri> TriBuffer : register(t2);
 
 
 RWStructuredBuffer<Pixel> BufferOut : register(u0);
@@ -95,6 +105,47 @@ bool SphereIsHitByRay(Sphere sphere, Ray ray, inout float distance)
 	return sphere_hit;
 }
 
+bool TriIsHitByRay(Tri tri, Ray ray, inout float distance)
+{
+	//https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+	//if this doesn't work out, try https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
+	//mayve this? http://www.lighthouse3d.com/tutorials/maths/ray-triangle-intersection/
+	float3 v0v1 = tri.mV1 - tri.mV0;
+	float3 v0v2 = tri.mV2 - tri.mV0;
+	float3 pvec = cross(ray.mDirection, v0v2);
+	float det = dot(v0v1, pvec);
+	
+	if (det < 0.001f)
+	{
+		return false; //do we really need to do this?
+	}
+
+	float inv_det = 1 / det;
+
+	float3 tvec = ray.mPoint - tri.mV0;
+	float u = dot(tvec, pvec) * inv_det;
+	if (u < 0 || u > 1)
+	{
+		return false;
+	}
+
+	float3 qvec = cross(tvec, v0v1);
+	float v = dot(ray.mDirection, qvec) * inv_det;
+	if (v < 0 || u + v > 1)
+	{
+		return false;
+	}
+
+	distance = dot(v0v2, qvec) * inv_det;	
+	if (distance < 0)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+
 RayCastResult FindNearestCollision(Ray ray)
 {
 	float near_dist = 999999.f;
@@ -112,12 +163,27 @@ RayCastResult FindNearestCollision(Ray ray)
 		}
 	}
 
-	//DO PLANES AND CONES AND SHIT HERE
+	int near_tri_id = -1;
+	for (i = 0; i < gNumTris; ++i)
+	{
+		float distance = 0;
+		if (TriIsHitByRay(TriBuffer[i], ray, distance))
+		{
+			if (distance < near_dist)
+			{
+				near_tri_id = i;
+				near_sphere_id = -1;
+				near_dist = distance;
+			}
+		}
+	}
 
+	//DO CONES AND SHIT HERE
 
 
 	RayCastResult res;
 	res.mNearestSphereID = near_sphere_id;
+	res.mNearestTriID = near_tri_id;
 	res.mCollisionDistance = near_dist;
 
 	return res;
@@ -181,8 +247,9 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 	return c;
 }
 
-float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
+float3 SphereGetColourFromRay( Sphere sphere, Ray ray, float distance )
 {
+	//TOOD, OPTIMIZE THIS BASED ON KNOWING distance already
 	float3 to_sphere = sphere.mPosition - ray.mPoint;
 	float dot_p = dot( to_sphere, ray.mDirection );
 	float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
@@ -196,6 +263,15 @@ float3 SphereGetColourFromRay( Sphere sphere, Ray ray )
 
 	return CalculateLighting( point_on_surface, normal, ray.mDirection );
 }
+
+float3 TriGetColourFromRay(Tri tri, Ray ray, float distance)
+{
+	float3 point_on_surface = ray.mPoint + ray.mDirection * distance;
+	float3 normal = float3(0, 1, 0);// normalize(cross(tri.mV1 - tri.mV0, tri.mV2 - tri.mV0));
+
+	return CalculateLighting(point_on_surface, normal, ray.mDirection);
+}
+
 
 float3 LightPassThroughGlow(Ray ray)
 {
@@ -251,12 +327,15 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	RayCastResult res = FindNearestCollision(ray);
 
 
-
 	//Get the lighting from the nearest primitive
 	float3 pixel = float3(0, 0, 0);
 	if (res.mNearestSphereID >= 0)
 	{
-		pixel = SphereGetColourFromRay(SphereBuffer[res.mNearestSphereID], ray);
+		pixel = SphereGetColourFromRay(SphereBuffer[res.mNearestSphereID], ray, res.mCollisionDistance);
+	}
+	else if(res.mNearestTriID >= 0)
+	{
+		pixel = TriGetColourFromRay(TriBuffer[res.mNearestTriID], ray, res.mCollisionDistance);
 	}
 	else
 	{

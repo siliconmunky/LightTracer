@@ -36,6 +36,14 @@ struct tSphere
 	float mRadius;
 };
 
+struct tTri
+{
+	Vector3 mV0;
+	Vector3 mV1;
+	Vector3 mV2;
+};
+
+
 
 
 __declspec(align(16)) struct tResolutionCB
@@ -56,12 +64,14 @@ __declspec(align(16)) struct tPrimitiveCB
 {
 	int num_lights;
 	int num_spheres;
+	int num_tris;
 };
 
 
 
 const int MAX_LIGHTS = 32;
 const int MAX_SPHERES = 32;
+const int MAX_TRIS = 32;
 
 
 
@@ -142,37 +152,19 @@ bool Render::InitDevice()
 	////////////////////////////////////////
 	// INPUT SCENE BUFFERS
 	////////////////////////////////////////
-	
-	//Sphere
-	D3D11_BUFFER_DESC input_descGPUBuffer;
-	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
-	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-	input_descGPUBuffer.ByteWidth = sizeof(tSphere) * MAX_SPHERES;
-	input_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	input_descGPUBuffer.StructureByteStride = sizeof(tSphere);
-	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mSphereDataGPUBuffer);
-	if (FAILED(hr))
-		return false;
-	D3D11_SHADER_RESOURCE_VIEW_DESC input_descView;
-	ZeroMemory(&input_descView, sizeof(input_descView));
-	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
-	input_descView.Format = DXGI_FORMAT_UNKNOWN;
-	input_descView.BufferEx.FirstElement = 0;
-	input_descView.BufferEx.NumElements = MAX_SPHERES;
-	if (FAILED(mD3DDevice->CreateShaderResourceView(mSphereDataGPUBuffer, &input_descView, &mSphereDataGPUBufferView)))
-		return false;
 
+	D3D11_BUFFER_DESC input_descGPUBuffer;
+	D3D11_SHADER_RESOURCE_VIEW_DESC input_descView;
 
 	//Light
 	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
 	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-	input_descGPUBuffer.ByteWidth = sizeof(tPointLight) * MAX_SPHERES;
+	input_descGPUBuffer.ByteWidth = sizeof(tPointLight) * MAX_LIGHTS;
 	input_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	input_descGPUBuffer.StructureByteStride = sizeof(tPointLight);
 	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mLightDataGPUBuffer);
 	if (FAILED(hr))
 		return false;
-
 	ZeroMemory(&input_descView, sizeof(input_descView));
 	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
 	input_descView.Format = DXGI_FORMAT_UNKNOWN;
@@ -181,7 +173,41 @@ bool Render::InitDevice()
 	if (FAILED(mD3DDevice->CreateShaderResourceView(mLightDataGPUBuffer, &input_descView, &mLightDataGPUBufferView)))
 		return false;
 
+	//Sphere
+	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
+	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	input_descGPUBuffer.ByteWidth = sizeof(tSphere) * MAX_SPHERES;
+	input_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	input_descGPUBuffer.StructureByteStride = sizeof(tSphere);
+	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mSphereDataGPUBuffer);
+	if (FAILED(hr))
+		return false;
+	ZeroMemory(&input_descView, sizeof(input_descView));
+	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+	input_descView.Format = DXGI_FORMAT_UNKNOWN;
+	input_descView.BufferEx.FirstElement = 0;
+	input_descView.BufferEx.NumElements = MAX_SPHERES;
+	if (FAILED(mD3DDevice->CreateShaderResourceView(mSphereDataGPUBuffer, &input_descView, &mSphereDataGPUBufferView)))
+		return false;
 
+	//Tri
+	ZeroMemory(&input_descGPUBuffer, sizeof(input_descGPUBuffer));
+	input_descGPUBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	input_descGPUBuffer.ByteWidth = sizeof(tTri) * MAX_TRIS;
+	input_descGPUBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	input_descGPUBuffer.StructureByteStride = sizeof(tTri);
+	hr = mD3DDevice->CreateBuffer(&input_descGPUBuffer, NULL, &mTriDataGPUBuffer);
+	if (FAILED(hr))
+		return false;
+	ZeroMemory(&input_descView, sizeof(input_descView));
+	input_descView.ViewDimension = D3D11_SRV_DIMENSION_BUFFEREX;
+	input_descView.Format = DXGI_FORMAT_UNKNOWN;
+	input_descView.BufferEx.FirstElement = 0;
+	input_descView.BufferEx.NumElements = MAX_TRIS;
+	if (FAILED(mD3DDevice->CreateShaderResourceView(mTriDataGPUBuffer, &input_descView, &mTriDataGPUBufferView)))
+		return false;
+
+	
 
 
 	////////////////////////////////////////
@@ -497,32 +523,44 @@ void Render::UpdateBuffers()
 	tPrimitiveCB cb_prims;
 	cb_prims.num_lights = 4;
 	cb_prims.num_spheres = 3;
+	cb_prims.num_tris = 2;
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
 
 	tPointLight lights[MAX_LIGHTS];
-	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 3.4f, 3.0f + sinf(Game::Instance->GetTime()));
+	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 8.4f, 3.0f + sinf(Game::Instance->GetTime()));
 	lights[0].mColour = Vector3(0.55f, 0.55, 0.55f);
 
-	lights[1].mPosition = Vector3(cosf(Game::Instance->GetTime()), 3.0f, 1.0f);
+	lights[1].mPosition = Vector3(cosf(Game::Instance->GetTime()), 8.0f, 1.0f);
 	lights[1].mColour = Vector3(0.65f, 0.23, 0.2f);
 
-	lights[2].mPosition = Vector3(1.0f, 5 + sinf(Game::Instance->GetTime()*4), 3.01f);
+	lights[2].mPosition = Vector3(1.0f, 7 + sinf(Game::Instance->GetTime()*4), 3.01f);
 	lights[2].mColour = Vector3(0.125f, 0.73, 0.1f);
 
-	lights[3].mPosition = Vector3(sinf(Game::Instance->GetTime() * 0.25f), 3.0f + cosf(Game::Instance->GetTime()*0.4f), 3.01f);
+	lights[3].mPosition = Vector3(sinf(Game::Instance->GetTime() * 0.25f), 7.0f + cosf(Game::Instance->GetTime()*0.4f), 3.01f);
 	lights[3].mColour = Vector3(0.05f, 0.03, 0.4f);
 	mImmediateContext->UpdateSubresource(mLightDataGPUBuffer, 0, 0, &lights, sizeof(tPointLight), MAX_LIGHTS * sizeof(tPointLight));
 	
 
 	tSphere spheres[MAX_SPHERES];
-	spheres[0].mPosition = Vector3(2.0f, -1.0f, 4.0f);
+	spheres[0].mPosition = Vector3(2.0f, 5.0f, 4.0f);
 	spheres[0].mRadius = 0.5f;
-	spheres[1].mPosition = Vector3(0.0f, -1.0f, 5.0f);
+	spheres[1].mPosition = Vector3(0.0f, 5.0f, 5.0f);
 	spheres[1].mRadius = 1.0f;
-	spheres[2].mPosition = Vector3(1.0f, 0.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
+	spheres[2].mPosition = Vector3(1.0f, 6.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
 	spheres[2].mRadius = 0.75f;
 	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
+
+
+	float big = 10000.0f;
+	tTri tris[MAX_TRIS];
+	tris[0].mV0 = Vector3(-big, 0, -big);
+	tris[0].mV1 = Vector3(big, 0, big);
+	tris[0].mV2 = Vector3(big, 0, -big);
+	tris[1].mV0 = Vector3(-big, 0, -big);
+	tris[1].mV1 = Vector3(-big, 0, big);
+	tris[1].mV2 = Vector3(big, 0, big);
+	mImmediateContext->UpdateSubresource(mTriDataGPUBuffer, 0, 0, &tris, sizeof(tTri), MAX_TRIS * sizeof(tTri));
 }
 
 
@@ -539,6 +577,7 @@ void Render::DoFrame()
 	mImmediateContext->CSSetConstantBuffers(2, 1, &mPrimitivesConstantBuffer);
 	mImmediateContext->CSSetShaderResources(0, 1, &mLightDataGPUBufferView);
 	mImmediateContext->CSSetShaderResources(1, 1, &mSphereDataGPUBufferView);
+	mImmediateContext->CSSetShaderResources(2, 1, &mTriDataGPUBufferView);
 
 	mImmediateContext->CSSetUnorderedAccessViews(0, 1, &mCSDestDataBufferView, NULL);
 

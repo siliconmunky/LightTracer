@@ -34,10 +34,12 @@ private:
 	ID3D11RasterizerState*		mRasterState;
 
 
-	ID3D11Buffer*				mSphereDataGPUBuffer;
-	ID3D11ShaderResourceView*	mSphereDataGPUBufferView;
 	ID3D11Buffer*				mLightDataGPUBuffer;
 	ID3D11ShaderResourceView*	mLightDataGPUBufferView;
+	ID3D11Buffer*				mSphereDataGPUBuffer;
+	ID3D11ShaderResourceView*	mSphereDataGPUBufferView;
+	ID3D11Buffer*				mTriDataGPUBuffer;
+	ID3D11ShaderResourceView*	mTriDataGPUBufferView;
 
 
 	ID3D11Buffer*				mResConstantBuffer;
