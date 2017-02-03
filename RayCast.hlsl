@@ -28,13 +28,14 @@ struct Tri
 	float3 mV2;
 };
 
+
+#define INVALID_ID -1
 struct RayCastResult
 {
 	int mNearestSphereID;
 	int mNearestTriID;
 	float mCollisionDistance;
 };
-
 
 
 
@@ -149,7 +150,7 @@ bool TriIsHitByRay(Tri tri, Ray ray, inout float distance)
 RayCastResult FindNearestCollision(Ray ray)
 {
 	float near_dist = 999999.f;
-	int near_sphere_id = -1;
+	int near_sphere_id = INVALID_ID;
 	for (int i = 0; i < gNumSpheres; ++i)
 	{
 		float distance = 0;
@@ -163,7 +164,7 @@ RayCastResult FindNearestCollision(Ray ray)
 		}
 	}
 
-	int near_tri_id = -1;
+	int near_tri_id = INVALID_ID;
 	for (i = 0; i < gNumTris; ++i)
 	{
 		float distance = 0;
@@ -172,7 +173,7 @@ RayCastResult FindNearestCollision(Ray ray)
 			if (distance < near_dist)
 			{
 				near_tri_id = i;
-				near_sphere_id = -1;
+				near_sphere_id = INVALID_ID;
 				near_dist = distance;
 			}
 		}
@@ -223,7 +224,7 @@ float OrenNayerDiffuse( float3 light, float3 view, float3 normal, float roughnes
 float3 CalculateLighting( float3 position, float3 normal, float3 view )
 {
 	//get all the lights, loop over them and test for vision	
-	float3 c = float3(0.1, 0.105, 0.12);
+	float3 c = float3(0.1, 0.1, 0.1);
 
 	for( int i = 0; i < gNumLights; ++i )
 	{
@@ -236,7 +237,7 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		ray.mDirection = to_light;
 		RayCastResult res = FindNearestCollision(ray);
 
-		if(res.mNearestSphereID == 0 || light_distance < res.mCollisionDistance )
+		if(res.mNearestSphereID == INVALID_ID || light_distance < res.mCollisionDistance )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 
@@ -329,11 +330,11 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 
 	//Get the lighting from the nearest primitive
 	float3 pixel = float3(0, 0, 0);
-	if (res.mNearestSphereID >= 0)
+	if (res.mNearestSphereID != INVALID_ID)
 	{
 		pixel = SphereGetColourFromRay(SphereBuffer[res.mNearestSphereID], ray, res.mCollisionDistance);
 	}
-	else if(res.mNearestTriID >= 0)
+	else if(res.mNearestTriID != INVALID_ID)
 	{
 		pixel = TriGetColourFromRay(TriBuffer[res.mNearestTriID], ray, res.mCollisionDistance);
 	}

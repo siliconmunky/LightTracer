@@ -527,27 +527,28 @@ void Render::UpdateBuffers()
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
 
+	Vector3 colour = Vector3(48.0f/256,75.0f/256,54.0f/256) * 1.4f;
 	tPointLight lights[MAX_LIGHTS];
 	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 8.4f, 3.0f + sinf(Game::Instance->GetTime()));
-	lights[0].mColour = Vector3(0.55f, 0.55, 0.55f);
+	lights[0].mColour = colour;
 
 	lights[1].mPosition = Vector3(cosf(Game::Instance->GetTime()), 8.0f, 1.0f);
-	lights[1].mColour = Vector3(0.65f, 0.23, 0.2f);
+	lights[1].mColour = colour;
 
-	lights[2].mPosition = Vector3(1.0f, 7 + sinf(Game::Instance->GetTime()*4), 3.01f);
-	lights[2].mColour = Vector3(0.125f, 0.73, 0.1f);
+	lights[2].mPosition = Vector3(cosf(Game::Instance->GetTime() * 4), 7 + sinf(Game::Instance->GetTime()*4), 3.01f);
+	lights[2].mColour = colour;
 
 	lights[3].mPosition = Vector3(sinf(Game::Instance->GetTime() * 0.25f), 7.0f + cosf(Game::Instance->GetTime()*0.4f), 3.01f);
-	lights[3].mColour = Vector3(0.05f, 0.03, 0.4f);
+	lights[3].mColour = colour;
 	mImmediateContext->UpdateSubresource(mLightDataGPUBuffer, 0, 0, &lights, sizeof(tPointLight), MAX_LIGHTS * sizeof(tPointLight));
 	
 
 	tSphere spheres[MAX_SPHERES];
-	spheres[0].mPosition = Vector3(2.0f, 5.0f, 4.0f);
-	spheres[0].mRadius = 0.5f;
-	spheres[1].mPosition = Vector3(0.0f, 5.0f, 5.0f);
+	spheres[0].mPosition = Vector3(1.1f, 4.0f, 4.0f);
+	spheres[0].mRadius = 1.0f;
+	spheres[1].mPosition = Vector3(-1.1f, 4.0f, 4.0f);
 	spheres[1].mRadius = 1.0f;
-	spheres[2].mPosition = Vector3(1.0f, 6.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
+	spheres[2].mPosition = Vector3(0.0f, 5.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
 	spheres[2].mRadius = 0.75f;
 	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
 
