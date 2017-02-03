@@ -237,7 +237,7 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		ray.mDirection = to_light;
 		RayCastResult res = FindNearestCollision(ray);
 
-		if(res.mNearestSphereID == INVALID_ID || light_distance < res.mCollisionDistance )
+		if((res.mNearestSphereID == INVALID_ID && res.mNearestTriID == INVALID_ID) || light_distance < res.mCollisionDistance )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 
