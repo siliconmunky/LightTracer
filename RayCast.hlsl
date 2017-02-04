@@ -299,6 +299,11 @@ float3 LightPassThroughGlow(Ray ray)
 	return contribution;
 }
 
+float3 ToneMap(float3 pixel)
+{
+	return pixel / (pixel + 1);
+}
+
 
 [numthreads(32, 32, 1)]
 void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
@@ -345,7 +350,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 		pixel = float3(x, x, x);
 	}
 	pixel += LightPassThroughGlow(ray);
-
+	pixel = ToneMap(pixel);
 
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );
 }
