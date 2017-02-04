@@ -258,7 +258,16 @@ bool Render::InitDevice()
 
 	ID3DBlob* pErrorBlob = NULL;
 	ID3DBlob* pBlob = NULL;
-	hr = D3DX11CompileFromFile(L"RayCast.hlsl", NULL, NULL, "CSMain", pProfile, dwShaderFlags, NULL, NULL, &pBlob, &pErrorBlob, NULL);
+	hr = D3DCompileFromFile(
+		L"RayCast.hlsl", 
+		NULL,				//defines
+		NULL,				//includes
+		"CSMain",			//entrypoint
+		pProfile,			//target
+		dwShaderFlags,		//flags1
+		0x00000000,
+		&pBlob, 
+		&pErrorBlob);
 	if (FAILED(hr))
 	{
 		if (pErrorBlob)
@@ -284,7 +293,7 @@ bool Render::InitDevice()
 	////////////////////////////////////////	
 	// Load the plain shader now
 	////////////////////////////////////////
-	ID3D10Blob* errorMessage;
+	ID3DBlob*   errorMessage;
 	ID3D10Blob* vertexShaderBuffer;
 	ID3D10Blob* pixelShaderBuffer;
 	D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
@@ -295,22 +304,45 @@ bool Render::InitDevice()
 	vertexShaderBuffer = 0;
 	pixelShaderBuffer = 0;
 
-	// Compile the vertex shader code and Create the vertex shader from the buffer.
-	hr = D3DX11CompileFromFile(L"Color.vs", NULL, NULL, "ColorVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &vertexShaderBuffer, &errorMessage, NULL);
+	// Compile the vertex shader code.
+	hr = D3DCompileFromFile(
+		L"Color.vs", 
+		NULL, 
+		NULL, 
+		"ColorVertexShader", 
+		"vs_5_0", 
+		D3D10_SHADER_ENABLE_STRICTNESS, 
+		0, 
+		&vertexShaderBuffer, 
+		&errorMessage);
 	if (FAILED(hr))
 	{
 		return false;
 	}
+	
 	hr = mD3DDevice->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &mVertexShader);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
-	// Compile the pixel shader code and Create the pixel shader from the buffer.
-	hr = D3DX11CompileFromFile(L"Color.ps", NULL, NULL, "ColorPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &pixelShaderBuffer, &errorMessage, NULL);
+	// Compile the pixel shader code.
+	hr = D3DCompileFromFile(
+			L"Color.ps", 
+			NULL, 
+			NULL, 
+			"ColorPixelShader", 
+			"ps_5_0", 
+			D3D10_SHADER_ENABLE_STRICTNESS, 
+			0, 
+			&pixelShaderBuffer, 
+			&errorMessage);
 	if (FAILED(hr))
 	{
+		if (errorMessage)
+			OutputDebugStringA((char*)errorMessage->GetBufferPointer());
+		if (errorMessage)
+			errorMessage->Release();
 		return false;
 	}
 	hr = mD3DDevice->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &mPixelShader);

@@ -9,7 +9,7 @@ struct tPixel
 
 StructuredBuffer<tPixel> ComputeOutputBuffer : register(t0);
 
-cbuffer ConstantBuffer : register(cb0)
+cbuffer ConstantBuffer : register(b0)
 {
     int gWidth;
     int gHeight;
