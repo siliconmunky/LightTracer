@@ -39,13 +39,14 @@ struct RayCastResult
 
 
 
-cbuffer ConstantBufferResolution : register(cb0)
+
+cbuffer ConstantBufferResolution : register(b0)
 {
     int gWidth;
     int gHeight;
 };
 
-cbuffer ConstantBufferCamera : register(cb1)
+cbuffer ConstantBufferCamera : register(b1)
 {
     float3 gCameraPosition;
 	float cam_orientation_00, cam_orientation_01, cam_orientation_02;
@@ -53,7 +54,7 @@ cbuffer ConstantBufferCamera : register(cb1)
 	float cam_orientation_20, cam_orientation_21, cam_orientation_22; 
 };
 
-cbuffer ConstantBufferPrimitives : register(cb2)
+cbuffer ConstantBufferPrimitives : register(b2)
 {
 	int gNumLights;
 	int gNumSpheres;
