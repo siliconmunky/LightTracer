@@ -79,8 +79,7 @@ void Audio::LoadData()
 	compressor.setRatio(10);*/
 
 
-	//myFFT.setup(4* NUM_AUDIO_FFT_GROUPS, 2 * NUM_AUDIO_FFT_GROUPS, NUM_AUDIO_FFT_GROUPS);
-	myFFT.setup(512, 512, 256);
+	myFFT.setup(256, 256, 32); //PARAM 1 and 2 MUST BE THE SAME OF HEAP CORRUPTION OCCURS
 }
 
 
@@ -101,7 +100,7 @@ void Audio::InternalPlay(double *output)
 
 	if (myFFT.process(out))
 	{ 
-		for (int i = 0; i < NUM_AUDIO_FFT_GROUPS; i++)
+		for (int i = 0; i < NUM_TRACKED_FFT_GROUPS; i++)
 		{
 			mCurrentMagnitude[i] = myFFT.magnitudes[i];
 		}

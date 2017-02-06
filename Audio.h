@@ -5,9 +5,8 @@
 #include "../Maximilian/maximilian.h"
 #include "../Maximilian/libs/maxim.h"
 #include "../Maximilian/RtAudio.h"
-//#include <dsound.h>
 
-#define NUM_AUDIO_FFT_GROUPS 4
+#define NUM_TRACKED_FFT_GROUPS 4
 
 class Audio
 {
@@ -17,7 +16,7 @@ public:
 	Audio();
 	~Audio();
 
-	float mCurrentMagnitude[NUM_AUDIO_FFT_GROUPS];
+	float mCurrentMagnitude[NUM_TRACKED_FFT_GROUPS];
 
 	int Routing(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData);
 

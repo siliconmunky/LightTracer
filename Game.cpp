@@ -50,10 +50,10 @@ void Game::GameLoop()
 	HandleInput(dt);
 
 
-	m0 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[0];
-	m1 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[1];
-	m2 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[2];
-	m3 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[3];
+	m0 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[0];
+	m1 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[1];
+	m2 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[2];
+	m3 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[3];
 
 	mRender.DoFrame();
 
