@@ -11,6 +11,14 @@
 
 Game* Game::Instance = NULL;
 
+
+
+float m0 = 0;
+float m1 = 0;
+float m2 = 0;
+float m3 = 0;
+
+
 Game::Game()
 {
 	Instance = this;
@@ -40,6 +48,12 @@ void Game::GameLoop()
 
 
 	HandleInput(dt);
+
+
+	m0 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[0];
+	m1 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[1];
+	m2 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[2];
+	m3 = 0.3f + 0.1f * mAudio.mCurrentMagnitude[3];
 
 	mRender.DoFrame();
 

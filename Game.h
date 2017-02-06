@@ -5,6 +5,7 @@
 #include "Input.h"
 #include "Camera.h"
 #include "Render.h"
+#include "Audio.h"
 
 #include <ctime>
 
@@ -28,6 +29,7 @@ public:
 	Input mInput;
 	Camera mCam;
 	Render mRender;
+	Audio mAudio;
 
 private:
 	std::clock_t mGameStartTime;

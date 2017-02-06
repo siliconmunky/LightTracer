@@ -533,6 +533,11 @@ bool Render::InitDevice()
 
 
 
+extern float m0;
+extern float m1;
+extern float m2;
+extern float m3;
+
 void Render::UpdateBuffers()
 {
 	tCameraCB cb_camera;
@@ -554,7 +559,7 @@ void Render::UpdateBuffers()
 
 	tPrimitiveCB cb_prims;
 	cb_prims.num_lights = 4;
-	cb_prims.num_spheres = 3;
+	cb_prims.num_spheres = 5;
 	cb_prims.num_tris = 2;
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
@@ -576,12 +581,17 @@ void Render::UpdateBuffers()
 	
 
 	tSphere spheres[MAX_SPHERES];
-	spheres[0].mPosition = Vector3(1.1f, 4.0f, 4.0f);
-	spheres[0].mRadius = 1.0f;
-	spheres[1].mPosition = Vector3(-1.1f, 4.0f, 4.0f);
-	spheres[1].mRadius = 1.0f;
-	spheres[2].mPosition = Vector3(0.0f, 5.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
-	spheres[2].mRadius = 0.75f;
+	spheres[0].mPosition = Vector3(-1.5f, 4.0f, 4.0f);
+	spheres[0].mRadius = m0;
+	spheres[1].mPosition = Vector3(-0.5f, 4.0f, 4.0f);
+	spheres[1].mRadius = m1;
+	spheres[2].mPosition = Vector3(0.5f, 4.0f, 4.0f);
+	spheres[2].mRadius = m2;
+	spheres[3].mPosition = Vector3(1.5f, 4.0f, 4.0f);
+	spheres[3].mRadius = m3;
+
+	spheres[4].mPosition = Vector3(0.0f, 5.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
+	spheres[4].mRadius = 0.75f;
 	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
 
 
