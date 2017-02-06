@@ -79,7 +79,8 @@ void Audio::LoadData()
 	compressor.setRatio(10);*/
 
 
-	myFFT.setup(2* NUM_AUDIO_FFT_GROUPS, 16, 16);
+	//myFFT.setup(4* NUM_AUDIO_FFT_GROUPS, 2 * NUM_AUDIO_FFT_GROUPS, NUM_AUDIO_FFT_GROUPS);
+	myFFT.setup(512, 512, 256);
 }
 
 
@@ -99,7 +100,7 @@ void Audio::InternalPlay(double *output)
 	//out = compressor.compress(out);
 
 	if (myFFT.process(out))
-	{
+	{ 
 		for (int i = 0; i < NUM_AUDIO_FFT_GROUPS; i++)
 		{
 			mCurrentMagnitude[i] = myFFT.magnitudes[i];
@@ -114,7 +115,7 @@ void Audio::InternalPlay(double *output)
 int Audio::Routing(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData)
 {
 	double *buffer = (double *)outputBuffer;
-	double *lastValues = (double *)userData;
+	//double *lastValues = (double *)userData;
 
 	//	double currentTime = (double) streamTime; Might come in handy for control
 	if (status)
@@ -125,11 +126,7 @@ int Audio::Routing(void *outputBuffer, void *inputBuffer, unsigned int nBufferFr
 	// Write interleaved audio data.
 	for (unsigned int i = 0; i < nBufferFrames; i++)
 	{
-		InternalPlay(lastValues);
-		for (int j = 0; j < maxiSettings::channels; j++)
-		{
-			*buffer++ = lastValues[j];
-		}
+		InternalPlay(&buffer[i*maxiSettings::channels]);
 	}
 	return 0;
 }
