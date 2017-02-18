@@ -6,10 +6,41 @@
 
 #include "fmod_errors.h"
 
-/*int routing(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, RtAudioStreamStatus status, void *userData)
+
+
+
+
+#define AUDIO_FX_DATA( e, wav, loop ) wav,
+static const char* gAudioFXFileNames[] =
 {
-	return Audio::Instance->Routing(outputBuffer, inputBuffer, nBufferFrames, streamTime, status, userData );
-}*/
+	AUDIO_FX_TUPLE
+};
+#undef AUDIO_FX_DATA
+
+
+
+#define AUDIO_FX_DATA( e, wav, loop ) loop,
+static const bool gAudioFXLoops[] =
+{
+	AUDIO_FX_TUPLE
+};
+#undef AUDIO_FX_DATA
+
+
+
+
+
+
+void FMOD_FN(FMOD_RESULT result)
+{
+	if (result != FMOD_OK)
+	{
+		Log::Printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+	}
+};
+
+
+
 
 Audio* Audio::Instance = NULL;
 
@@ -19,39 +50,10 @@ Audio::Audio()
 
 
 	mSystem = NULL;
-	mSound = NULL;
-	mChannel = NULL;
-	mDSP = NULL;
 
 
-	FMOD_RESULT result;
-
-	result = FMOD::System_Create(&mSystem);      // Create the main system object.
-	if (result != FMOD_OK)
-	{
-		Log::Printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
-		exit(-1);
-	}
-
-	result = mSystem->init(512, FMOD_INIT_NORMAL, 0);    // Initialize FMOD.
-	if (result != FMOD_OK)
-	{
-		Log::Printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
-		exit(-1);
-	}
-
- 	result = mSystem->createDSPByType(FMOD_DSP_TYPE_FFT, &mDSP);
-	if (result != FMOD_OK)
-	{
-		Log::Printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
-		exit(-1);
-	}
-
-
-	for (int i = 0; i < NUM_TRACKED_FFT_GROUPS; ++i)
-	{
-		mCurrentMagnitude[i] = 0.2f;
-	}
+	FMOD_FN(FMOD::System_Create(&mSystem));      // Create the main system object.
+	FMOD_FN(mSystem->init(512, FMOD_INIT_NORMAL, 0));    // Initialize FMOD.
 
 
 	LoadData();
@@ -65,51 +67,141 @@ Audio::~Audio()
 
 void Audio::LoadData()
 {
-	FMOD_RESULT result;
-
-	result = mSystem->createSound("Sound/hello.wav", FMOD_3D, 0, &mSound);
-	if (result != FMOD_OK)
+	for (int i = 0; i < MAX_AUDIO_FX_DATA_ENUM; ++i)
 	{
-		Log::Printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+		FMOD_FN(mSystem->createSound(gAudioFXFileNames[i], FMOD_3D, 0, &mSoundsData[i]));
+		if (gAudioFXLoops[i])
+		{
+			FMOD_FN(mSoundsData[i]->setMode(FMOD_LOOP_NORMAL));
+		}
 	}
-
-
 }
 
-void Audio::StartSound()
+AfxHandle Audio::StartSound(AUDIO_FX_DATA_ENUM e, Vector3& pos, bool do_fft /*= false*/)
 {
-	FMOD_RESULT result;
-	/*result = mSound->setMode(FMOD_LOOP_NORMAL);
-	if (result != FMOD_OK)
+	int slot = INVALID_HANDLE;
+
+	for (int i = 0; i < MAX_ACTIVE_AFX; ++i)
 	{
-		Log::Printf("FMOD error! setMode %s\n", FMOD_ErrorString(result));
-	}*/
-
-	result = mSystem->playSound(mSound, 0, false, &mChannel);
-
-	FMOD_VECTOR sound_pos;
-	sound_pos.x = 0;
-	sound_pos.y = 0;
-	sound_pos.z = 0;
-	mChannel->set3DAttributes(&sound_pos, NULL);
-
-
-	mChannel->addDSP(0, mDSP); //FMOD_DSP_PARAMETER_DATA_TYPE_FFT???
-	result = mDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, NUM_TRACKED_FFT_GROUPS);
-	if (result != FMOD_OK)
+		if (!mActiveAudio[i].mActive)
+		{
+			slot = i;
+			break;
+		}
+	}
+	if( slot == INVALID_HANDLE)
 	{
-		Log::Printf("FMOD error! setParameterInt failed %s\n", FMOD_ErrorString(result));
+		AfxHandle handle(INVALID_HANDLE, 0);
+		return handle;
 	}
 
-	result = mDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_HAMMING);
-	if (result != FMOD_OK)
+	
+	FMOD_FN( mSystem->playSound(mSoundsData[e], 0, false, &mActiveAudio[slot].mChannel) );
+
+	FMOD_FN(mActiveAudio[slot].mChannel->set3DAttributes((FMOD_VECTOR*)&pos, NULL));
+
+	if (do_fft)
 	{
-		Log::Printf("FMOD error! setParameterInt failed %s\n", FMOD_ErrorString(result));
+		FMOD_FN(mSystem->createDSPByType(FMOD_DSP_TYPE_FFT, &mActiveAudio[slot].mDSP));
+
+		FMOD_FN(mActiveAudio[slot].mChannel->addDSP(0, mActiveAudio[slot].mDSP)); //FMOD_DSP_PARAMETER_DATA_TYPE_FFT???
+		FMOD_FN(mActiveAudio[slot].mDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, NUM_TRACKED_FFT_GROUPS));
+		FMOD_FN(mActiveAudio[slot].mDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_HAMMING));
+	}
+
+	mActiveAudio[slot].mActive = true;	
+	AfxHandle handle(slot, ++mActiveAudio[slot].mVerifier);
+
+	return handle;
+}
+
+bool Audio::IsValidHandle(AfxHandle handle)
+{
+	return handle.mSlot >= 0 && handle.mSlot < MAX_ACTIVE_AFX && mActiveAudio[handle.mSlot].mVerifier == handle.mVerifier;
+
+}
+void Audio::UpdateSoundPos(AfxHandle handle, Vector3& pos)
+{
+	if( IsValidHandle(handle) )
+	{
+
+		FMOD_FN(mActiveAudio[handle.mSlot].mChannel->set3DAttributes((FMOD_VECTOR*)&pos, NULL));
+	}
+	else
+	{
+		Log::Printf("Failure to UpdateSoundPos, invalid handle\n");
 	}
 }
+
+void Audio::StopSound(AfxHandle handle)
+{
+	if (IsValidHandle(handle))
+	{
+		if (mActiveAudio[handle.mSlot].mActive)
+		{
+			FMOD_FN(mActiveAudio[handle.mSlot].mChannel->stop());
+			
+			mActiveAudio[handle.mSlot].Clear();
+		}
+	}
+	else
+	{
+		Log::Printf("Failure to StopSound, invalid handle\n");
+	}
+}
+
+float Audio::GetFFTData(AfxHandle handle)
+{
+	if (IsValidHandle(handle))
+	{
+		//FMOD_FN(mActiveAudio[handle.mSlot].mChannel->set3DAttributes((FMOD_VECTOR*)&pos, NULL));
+		if (mActiveAudio[handle.mSlot].mDSP != NULL)
+		{
+			FMOD_DSP_PARAMETER_FFT* fft = NULL;
+
+			FMOD_FN(mActiveAudio[handle.mSlot].mDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&fft, NULL, NULL, 0) );
+
+			if (fft->numchannels > 0 && fft->length > 0)
+			{
+				return fft->spectrum[0][0];
+			}
+			return 0.0f;
+
+			/*for (int channel = 0; channel < fft->numchannels; channel++)
+			{
+			for (int bin = 0; bin < fft->length; ++bin) //fft->length
+			{
+			float freq_val = fft->spectrum[channel][bin];
+			//mCurrentMagnitude[bin] = freq_val * 100.0f;
+			}
+			}*/
+		}
+	}
+	else
+	{
+		Log::Printf("Failure to GetFFTData, invalid handle\n");
+	}
+	return 0;
+}
+
 
 void Audio::Update(float dt)
 {
+	for (int i = 0; i < MAX_ACTIVE_AFX; ++i)
+	{
+		if (mActiveAudio[i].mActive)
+		{
+			bool is_playing = false;
+			FMOD_FN(mActiveAudio[i].mChannel->isPlaying(&is_playing));
+			if (!is_playing)
+			{
+				mActiveAudio[i].Clear();
+			}
+		}
+	}
+
+
+
 	Vector3* pos = Camera::Instance->GetPosition();
 	FMOD_VECTOR listener_pos;
 	listener_pos.x = pos->mX;
@@ -134,70 +226,9 @@ void Audio::Update(float dt)
 	listener_vel.y = 0;
 	listener_vel.z = 0;
 
-	FMOD_RESULT result;
-	result = mSystem->set3DListenerAttributes(0, &listener_pos, &listener_vel, &listener_forward, &listener_up);     // update 'ears'
-	if (result != FMOD_OK)
-	{
-		Log::Printf("FMOD error! set3DListenerAttributes failed %s\n", FMOD_ErrorString(result));
-	}
+	FMOD_FN( mSystem->set3DListenerAttributes(0, &listener_pos, &listener_vel, &listener_forward, &listener_up) );
 
-	mSystem->update();   // needed to update 3d engine, once per frame.
-
-
-
-
-
-
-
-	if (mDSP != NULL)
-	{
-		//FMOD::Channel* cChannel = soundVec[i].getChannel();
-		FMOD_DSP_PARAMETER_FFT* fft = NULL;
-
-		//float *bin_data = nullptr;
-
-		result = mDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&fft, NULL, NULL, 0);
-		if (result != FMOD_OK)
-		{
-			Log::Printf("FMOD error! %s\n", FMOD_ErrorString(result));
-		}
-		/*result = mDSP->getOutput(FMOD_DSP_FFT_SPECTRUMDATA, &mDSP, 0);
-		if (result != FMOD_OK)
-		{
-			Log::Printf("FMOD error! %s\n", FMOD_ErrorString(result));
-		}*/
-
-		for (int channel = 0; channel < fft->numchannels; channel++)
-		{
-			//assert here NUM_TRACKED_FFT_GROUPS == 
-			for (int bin = 0; bin < NUM_TRACKED_FFT_GROUPS/*fft->length*/; ++bin) //fft->length
-			{
-				float freq_val = fft->spectrum[channel][bin];
-				mCurrentMagnitude[bin] = freq_val * 100.0f;
-			}
-		}
-
-
-
-		/*if (fullspectrum == true)
-		{      // if getting fullSpectrum
-			for (int i = 0; i < 2; i++) {
-				for (int j = 0; j < 32; j++) {
-					freqVal = fft->spectrum[i][j];
-					// do something with freqVal
-				}
-			}
-		}
-		else
-		{   // if getting only Dominant Frequency.. ** THIS WORKS **
-			cDSP->getParameterFloat(FMOD_DSP_FFT_DOMINANT_FREQ, &dfft, 0, 0);
-			// float amplitude = ?
-			// do something with dom freq (dfft)
-		}
-		cChannel->setPaused(false);*/
-	}
-
-
+	mSystem->update();
 }
 
 

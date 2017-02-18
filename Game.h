@@ -36,6 +36,6 @@ private:
 	
 	void HandleInput(float dt);
 
-
+	AfxHandle mHelloAFX;
 };
 

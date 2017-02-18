@@ -30,7 +30,9 @@ Game::Game()
 	mGameStartTime = std::clock();
 	mPrevFrameTime = std::clock();
 
-	
+
+	AfxHandle hum_fx = mAudio.StartSound(AFX_BG_HUM, Vector3(0,0,0) );
+
 
 	Scene::Init(); //IS TIHS USED AT THE MOMENT?
 }
@@ -51,10 +53,18 @@ void Game::GameLoop()
 
 	mAudio.Update(dt);
 
-	m0 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[0];
-	m1 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[1];
-	m2 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[2];
-	m3 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[3];
+	if (mAudio.IsValidHandle(mHelloAFX))
+	{
+		m0 = 0.3f + mAudio.GetFFTData(mHelloAFX);
+		m1 = m0;
+		m2 = m0;
+		m3 = m0;
+	}
+	else
+	{
+		m0 = m1 = m2 = m3 = 0.3f;
+	}
+
 
 	mRender.DoFrame();
 }
@@ -92,7 +102,7 @@ void Game::HandleInput(float dt)
 	static bool first_down = true;
 	if (mInput.IsKeyDown(IX_KEY_SPACE) && first_down)
 	{
-		mAudio.StartSound();
+		mHelloAFX = mAudio.StartSound(AFX_HELLO, Vector3(0, 0, 0), true);
 		first_down = false;
 	}
 	else if (!mInput.IsKeyDown(IX_KEY_SPACE))
