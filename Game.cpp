@@ -55,7 +55,7 @@ void Game::GameLoop()
 
 	if (mAudio.IsValidHandle(mHelloAfx))
 	{
-		m0 = 0.3f + mAudio.GetFFTData(mHelloAfx) * 100.f;
+		m0 = 0.3f + mAudio.GetFFTData(mHelloAfx) * 10.f;
 		m1 = m0;
 		m2 = m0;
 		m3 = m0;

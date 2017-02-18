@@ -225,7 +225,7 @@ float OrenNayerDiffuse( float3 light, float3 view, float3 normal, float roughnes
 float3 CalculateLighting( float3 position, float3 normal, float3 view )
 {
 	//get all the lights, loop over them and test for vision	
-	float3 c = float3(0.1, 0.1, 0.1);
+	float3 c = float3(0.0, 0.0, 0.0);
 
 	for( int i = 0; i < gNumLights; ++i )
 	{
@@ -241,8 +241,9 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 		if((res.mNearestSphereID == INVALID_ID && res.mNearestTriID == INVALID_ID) || light_distance < res.mCollisionDistance )
 		{
 			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
+			float intensity = 1 / (light_distance);
 
-			c = c + LightBuffer[i].mColour * diffuse; //QUADRATIC FALLOF HERE?
+			c = c + LightBuffer[i].mColour * diffuse * intensity;
 		}
 	}
 

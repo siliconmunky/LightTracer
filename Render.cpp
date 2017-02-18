@@ -564,7 +564,7 @@ void Render::UpdateBuffers()
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
 
-	Vector3 colour = Vector3(48.0f/256,75.0f/256,54.0f/256) * 1.4f;
+	Vector3 colour = Vector3(48.0f / 256, 75.0f / 256, 54.0f / 256) * 7.0f;
 	tPointLight lights[MAX_LIGHTS];
 	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 8.4f, 3.0f + sinf(Game::Instance->GetTime()));
 	lights[0].mColour = colour;
