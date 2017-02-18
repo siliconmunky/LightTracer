@@ -133,7 +133,7 @@ void Audio::UpdateSoundPos(AfxHandle handle, Vector3& pos)
 	}
 }
 
-void Audio::StopSound(AfxHandle handle)
+void Audio::StopSound(AfxHandle& handle)
 {
 	if (IsValidHandle(handle))
 	{
@@ -142,6 +142,7 @@ void Audio::StopSound(AfxHandle handle)
 			FMOD_FN(mActiveAudio[handle.mSlot].mChannel->stop());
 			
 			mActiveAudio[handle.mSlot].Clear();
+			handle.Clear();
 		}
 	}
 	else

@@ -31,7 +31,7 @@ Game::Game()
 	mPrevFrameTime = std::clock();
 
 
-	AfxHandle hum_fx = mAudio.StartSound(AFX_BG_HUM, Vector3(0,0,0) );
+	mHumAfx = mAudio.StartSound(AFX_BG_HUM, Vector3(0, 0, 0), true);
 
 
 	Scene::Init(); //IS TIHS USED AT THE MOMENT?
@@ -53,9 +53,9 @@ void Game::GameLoop()
 
 	mAudio.Update(dt);
 
-	if (mAudio.IsValidHandle(mHelloAFX))
+	if (mAudio.IsValidHandle(mHelloAfx))
 	{
-		m0 = 0.3f + mAudio.GetFFTData(mHelloAFX);
+		m0 = 0.3f + mAudio.GetFFTData(mHelloAfx) * 100.f;
 		m1 = m0;
 		m2 = m0;
 		m3 = m0;
@@ -67,6 +67,9 @@ void Game::GameLoop()
 
 
 	mRender.DoFrame();
+
+
+	mInput.EndFrame();
 }
 
 
@@ -99,16 +102,24 @@ void Game::HandleInput(float dt)
 		mCam.StrafeLeftRight(move_sens*dt);
 	}
 
-	static bool first_down = true;
-	if (mInput.IsKeyDown(IX_KEY_SPACE) && first_down)
+	if (mInput.IsKeyJustDown(IX_KEY_SPACE))
 	{
-		mHelloAFX = mAudio.StartSound(AFX_HELLO, Vector3(0, 0, 0), true);
-		first_down = false;
+		mHelloAfx = mAudio.StartSound(AFX_HELLO, Vector3(0, 0, 0), true);
 	}
-	else if (!mInput.IsKeyDown(IX_KEY_SPACE))
+
+
+	if (mInput.IsKeyJustDown(IX_KEY_B))
 	{
-		first_down = true;
+		if (mAudio.IsValidHandle(mHumAfx))
+		{
+			mAudio.StopSound(mHumAfx);
+		}
+		else
+		{
+			mHumAfx = mAudio.StartSound(AFX_BG_HUM, Vector3(0, 0, 0), true);
+		}
 	}
+
 
 	static float x_sensitivity = 0.0006f;
 	static float y_sensitivity = 0.0006f;

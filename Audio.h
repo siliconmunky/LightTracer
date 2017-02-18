@@ -37,6 +37,7 @@ struct AfxHandle
 		mVerifier = verifier;
 	}
 
+	void Clear() { mSlot = INVALID_HANDLE; };
 	bool IsValid() { return mSlot != INVALID_HANDLE; };
 
 	char mSlot;
@@ -81,7 +82,7 @@ public:
 	
 	AfxHandle StartSound(AUDIO_FX_DATA_ENUM e, Vector3& pos, bool do_fft = false);
 	void UpdateSoundPos(AfxHandle handle, Vector3& pos);
-	void StopSound(AfxHandle handle);
+	void StopSound(AfxHandle& handle);
 
 	float GetFFTData(AfxHandle handle);
 
