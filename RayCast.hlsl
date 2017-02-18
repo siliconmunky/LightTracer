@@ -222,10 +222,32 @@ float OrenNayerDiffuse( float3 light, float3 view, float3 normal, float roughnes
 	return output;
 }
 
+float Phong(float3 light, float3 view, float3 normal)
+{
+	float l_dot_n = dot(light, normal);
+
+	float3 r = reflect(light, normal);
+	float cos_a = saturate(dot(view, r));
+	float spec = pow(cos_a, 50);
+	return l_dot_n + spec;
+}
+
+float BlinnPhong(float3 light, float3 view, float3 normal)
+{
+	float l_dot_n = dot(light, normal);
+
+	float3 half_vec = normalize(light - view);
+	float n_dot_h = saturate(dot(normal, half_vec));
+	float spec = pow(n_dot_h, 90);
+
+	return l_dot_n + spec;
+}
+
+
 float3 CalculateLighting( float3 position, float3 normal, float3 view )
 {
 	//get all the lights, loop over them and test for vision	
-	float3 c = float3(0.0, 0.0, 0.0);
+	float3 c = float3(0.05, 0.05, 0.05);
 
 	for( int i = 0; i < gNumLights; ++i )
 	{
@@ -240,7 +262,8 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 
 		if((res.mNearestSphereID == INVALID_ID && res.mNearestTriID == INVALID_ID) || light_distance < res.mCollisionDistance )
 		{
-			float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
+			//float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
+			float diffuse = BlinnPhong(to_light, view, normal);
 			float intensity = 1 / (light_distance);
 
 			c = c + LightBuffer[i].mColour * diffuse * intensity;
@@ -347,7 +370,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	}
 	else
 	{
-		float x = ray.mDirection.y;
+		float x = lerp( 0.05, 1.0, ray.mDirection.y );
 		pixel = float3(x, x, x);
 	}
 	pixel += LightPassThroughGlow(ray);
