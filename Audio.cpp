@@ -16,7 +16,14 @@ Audio* Audio::Instance = NULL;
 Audio::Audio()
 {
 	Instance = this;
-	
+
+
+	mSystem = NULL;
+	mSound = NULL;
+	mChannel = NULL;
+	mDSP = NULL;
+
+
 	FMOD_RESULT result;
 
 	result = FMOD::System_Create(&mSystem);      // Create the main system object.
@@ -33,13 +40,18 @@ Audio::Audio()
 		exit(-1);
 	}
 
+ 	result = mSystem->createDSPByType(FMOD_DSP_TYPE_FFT, &mDSP);
+	if (result != FMOD_OK)
+	{
+		Log::Printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+		exit(-1);
+	}
 
-	
+
 	for (int i = 0; i < NUM_TRACKED_FFT_GROUPS; ++i)
 	{
 		mCurrentMagnitude[i] = 0.2f;
 	}
-
 
 
 	LoadData();
@@ -81,6 +93,19 @@ void Audio::StartSound()
 	sound_pos.z = 0;
 	mChannel->set3DAttributes(&sound_pos, NULL);
 
+
+	mChannel->addDSP(0, mDSP); //FMOD_DSP_PARAMETER_DATA_TYPE_FFT???
+	result = mDSP->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, NUM_TRACKED_FFT_GROUPS);
+	if (result != FMOD_OK)
+	{
+		Log::Printf("FMOD error! setParameterInt failed %s\n", FMOD_ErrorString(result));
+	}
+
+	result = mDSP->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_HAMMING);
+	if (result != FMOD_OK)
+	{
+		Log::Printf("FMOD error! setParameterInt failed %s\n", FMOD_ErrorString(result));
+	}
 }
 
 void Audio::Update(float dt)
@@ -117,6 +142,62 @@ void Audio::Update(float dt)
 	}
 
 	mSystem->update();   // needed to update 3d engine, once per frame.
+
+
+
+
+
+
+
+	if (mDSP != NULL)
+	{
+		//FMOD::Channel* cChannel = soundVec[i].getChannel();
+		FMOD_DSP_PARAMETER_FFT* fft = NULL;
+
+		//float *bin_data = nullptr;
+
+		result = mDSP->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&fft, NULL, NULL, 0);
+		if (result != FMOD_OK)
+		{
+			Log::Printf("FMOD error! %s\n", FMOD_ErrorString(result));
+		}
+		/*result = mDSP->getOutput(FMOD_DSP_FFT_SPECTRUMDATA, &mDSP, 0);
+		if (result != FMOD_OK)
+		{
+			Log::Printf("FMOD error! %s\n", FMOD_ErrorString(result));
+		}*/
+
+		for (int channel = 0; channel < fft->numchannels; channel++)
+		{
+			//assert here NUM_TRACKED_FFT_GROUPS == 
+			for (int bin = 0; bin < NUM_TRACKED_FFT_GROUPS/*fft->length*/; ++bin) //fft->length
+			{
+				float freq_val = fft->spectrum[channel][bin];
+				mCurrentMagnitude[bin] = freq_val * 100.0f;
+			}
+		}
+
+
+
+		/*if (fullspectrum == true)
+		{      // if getting fullSpectrum
+			for (int i = 0; i < 2; i++) {
+				for (int j = 0; j < 32; j++) {
+					freqVal = fft->spectrum[i][j];
+					// do something with freqVal
+				}
+			}
+		}
+		else
+		{   // if getting only Dominant Frequency.. ** THIS WORKS **
+			cDSP->getParameterFloat(FMOD_DSP_FFT_DOMINANT_FREQ, &dfft, 0, 0);
+			// float amplitude = ?
+			// do something with dom freq (dfft)
+		}
+		cChannel->setPaused(false);*/
+	}
+
+
 }
 
 

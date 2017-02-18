@@ -27,9 +27,10 @@ public:
 private:
 	void LoadData();
 	
-	FMOD::System *mSystem;
-	FMOD::Sound *mSound;
-	FMOD::Channel *mChannel;
+	FMOD::System* mSystem;
+	FMOD::Sound* mSound;
+	FMOD::Channel* mChannel;
+	FMOD::DSP* mDSP;
 
 	/*RtAudio* mDac;
 
