@@ -5,6 +5,11 @@
 class Vector3
 {
 public:
+	static Vector3 X_AXIS;
+	static Vector3 Y_AXIS;
+	static Vector3 Z_AXIS;
+	static Vector3 ORIGIN;
+
 	Vector3() {};
 	Vector3( const Vector3& r ) { mX = r.mX; mY = r.mY; mZ = r.mZ; };
 	Vector3( float x, float y, float z );

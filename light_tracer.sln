@@ -4,11 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light_tracer", "light_tracer.vcxproj", "{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}"
-	ProjectSection(ProjectDependencies) = postProject
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC} = {16A8DA74-02BB-4883-8B45-7A052DBD3EFC}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MaximilianVS2015", "..\Maximilian\MaximilianVS2015\MaximilianVS2015.vcxproj", "{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,16 +23,6 @@ Global
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|Win32.ActiveCfg = Release|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|Win32.Build.0 = Release|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|x64.ActiveCfg = Release|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Debug|ARM.ActiveCfg = Debug|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Debug|Win32.Build.0 = Debug|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Debug|x64.ActiveCfg = Debug|x64
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Debug|x64.Build.0 = Debug|x64
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Release|ARM.ActiveCfg = Release|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Release|Win32.ActiveCfg = Release|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Release|Win32.Build.0 = Release|Win32
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Release|x64.ActiveCfg = Release|x64
-		{16A8DA74-02BB-4883-8B45-7A052DBD3EFC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

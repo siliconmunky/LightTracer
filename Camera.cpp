@@ -98,11 +98,9 @@ void Camera::RotateLeftRight(float radians)
 	mView.mY = mat[3]*mView.mX + mat[4]*mView.mY + mat[5]*mView.mZ; 
 	mView.mZ = mat[6]*mView.mX + mat[7]*mView.mY + mat[8]*mView.mZ; 
 	mView = !mView;
-
-	mUpVector.mX = mat[0]*mUpVector.mX + mat[1]*mUpVector.mY + mat[2]*mUpVector.mZ;
-	mUpVector.mY = mat[3]*mUpVector.mX + mat[4]*mUpVector.mY + mat[5]*mUpVector.mZ; 
-	mUpVector.mZ = mat[6]*mUpVector.mX + mat[7]*mUpVector.mY + mat[8]*mUpVector.mZ; 
-	mUpVector = !mUpVector;
+	
+	Vector3 side_vec = !(Vector3::Y_AXIS % mView);
+	mUpVector = !(mView % side_vec);
 }
 
 
@@ -110,25 +108,31 @@ void Camera::RotateLeftRight(float radians)
 void Camera::RotateUpDown(float radians)
 //-------------------------------------------------------------------------------------------
 {
-	Vector3 sideVec = !(mUpVector % mView);
+	Vector3 old_mView = mView;
+	Vector3 old_mUpVector = mUpVector;
 
-	float x = sideVec.mX;
-	float y = sideVec.mY;
-	float z = sideVec.mZ;
+	Vector3 side_vec = !(mUpVector % mView);
 
-    float mat[] = { (1.0f+(1.0f-cosf(radians))*(x*x-1.0f)), (-z*sinf(radians)+(1.0f-cosf(radians))*x*y), (y*sinf(radians)+(1.0f-cosf(radians))*x*z), 
-				(z*sinf(radians)+(1.0f-cosf(radians))*x*y), (1.0f + (1.0f-cosf(radians))*(y*y-1.0f)), (-x*sinf(radians)+(1.0f-cosf(radians))*y*z), 
-				(-y*sinf(radians)+(1.0f-cosf(radians))*x*z), (x*sinf(radians)+(1.0f-cosf(radians))*y*z), (1.0f + (1.0f-cosf(radians))*(z*z-1.0f))}; 
+	float x = side_vec.mX;
+	float y = side_vec.mY;
+	float z = side_vec.mZ;
 
-	mView.mX = mat[0]*mView.mX + mat[1]*mView.mY + mat[2]*mView.mZ;
-	mView.mY = mat[3]*mView.mX + mat[4]*mView.mY + mat[5]*mView.mZ; 
-	mView.mZ = mat[6]*mView.mX + mat[7]*mView.mY + mat[8]*mView.mZ; 
+	float mat[] = { (1.0f + (1.0f - cosf(radians))*(x*x - 1.0f)), (-z*sinf(radians) + (1.0f - cosf(radians))*x*y), (y*sinf(radians) + (1.0f - cosf(radians))*x*z),
+				(z*sinf(radians) + (1.0f - cosf(radians))*x*y), (1.0f + (1.0f - cosf(radians))*(y*y - 1.0f)), (-x*sinf(radians) + (1.0f - cosf(radians))*y*z),
+				(-y*sinf(radians) + (1.0f - cosf(radians))*x*z), (x*sinf(radians) + (1.0f - cosf(radians))*y*z), (1.0f + (1.0f - cosf(radians))*(z*z - 1.0f)) };
+
+	mView.mX = mat[0] * mView.mX + mat[1] * mView.mY + mat[2] * mView.mZ;
+	mView.mY = mat[3] * mView.mX + mat[4] * mView.mY + mat[5] * mView.mZ;
+	mView.mZ = mat[6] * mView.mX + mat[7] * mView.mY + mat[8] * mView.mZ;
 	mView = !mView;
 
-	mUpVector.mX = mat[0]*mUpVector.mX + mat[1]*mUpVector.mY + mat[2]*mUpVector.mZ;
-	mUpVector.mY = mat[3]*mUpVector.mX + mat[4]*mUpVector.mY + mat[5]*mUpVector.mZ; 
-	mUpVector.mZ = mat[6]*mUpVector.mX + mat[7]*mUpVector.mY + mat[8]*mUpVector.mZ; 
-	mUpVector = !mUpVector;
+	mUpVector = !(mView % side_vec);
+
+	if (mUpVector.mY < 0.1f)
+	{
+		mUpVector = old_mUpVector;
+		mView = old_mView;
+	}
 }
 
 //-------------------------------------------------------------------------------------------

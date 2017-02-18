@@ -136,6 +136,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 	static int mid_height = GetSystemMetrics(SM_CYSCREEN) / 2;
 
 
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED); //required for each thread to use fmod
+
 	//init the mouse position so we don't spike on boot
 	SetCursorPos(mid_width, mid_height);
 	ShowCursor(false);
@@ -202,6 +204,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 		game->GameLoop();
 	}
 	
+
+	CoUninitialize(); //to finish using fmod
 	
     return 0;
 }

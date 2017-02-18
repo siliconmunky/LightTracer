@@ -19,8 +19,6 @@ public:
 
 
 	void GameLoop();
-	
-	void HandleInput(float dt);
 
 	float GetTime();
 
@@ -34,5 +32,10 @@ public:
 private:
 	std::clock_t mGameStartTime;
 	std::clock_t mPrevFrameTime;
+
+	
+	void HandleInput(float dt);
+
+
 };
 

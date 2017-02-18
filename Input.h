@@ -8,6 +8,7 @@ enum IX_KEY
 	IX_KEY_A = 'A',
 	IX_KEY_S = 'S',
 	IX_KEY_D = 'D',
+	IX_KEY_SPACE = ' ',
 
 	NUM_IX_KEY = UCHAR_MAX,
 };

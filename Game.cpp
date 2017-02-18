@@ -49,6 +49,7 @@ void Game::GameLoop()
 
 	HandleInput(dt);
 
+	mAudio.Update(dt);
 
 	m0 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[0];
 	m1 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[1];
@@ -56,8 +57,6 @@ void Game::GameLoop()
 	m3 = 0.3f + 0.01f * mAudio.mCurrentMagnitude[3];
 
 	mRender.DoFrame();
-
-
 }
 
 
@@ -88,6 +87,17 @@ void Game::HandleInput(float dt)
 	if (mInput.IsKeyDown(IX_KEY_D))
 	{
 		mCam.StrafeLeftRight(move_sens*dt);
+	}
+
+	static bool first_down = true;
+	if (mInput.IsKeyDown(IX_KEY_SPACE) && first_down)
+	{
+		mAudio.StartSound();
+		first_down = false;
+	}
+	else if (!mInput.IsKeyDown(IX_KEY_SPACE))
+	{
+		first_down = true;
 	}
 
 	static float x_sensitivity = 0.0006f;
