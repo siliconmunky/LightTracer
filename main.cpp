@@ -9,10 +9,10 @@
 
 
 HWND gHWnd = NULL;
-int gWidth = 1280;
-int gHeight = 720;
-bool gVsync = false;
-bool gFullScreen = false;
+int gWidth = 1920;
+int gHeight = 1080;
+bool gVsync = true;
+bool gFullScreen = true;
 
 
 

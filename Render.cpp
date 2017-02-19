@@ -267,7 +267,7 @@ bool Render::InitDevice()
 	ID3DBlob* pErrorBlob = NULL;
 	ID3DBlob* pBlob = NULL;
 	hr = D3DCompileFromFile(
-		L"RayCast.hlsl", 
+		L"shaders/RayCast.hlsl", 
 		NULL,				//defines
 		NULL,				//includes
 		"CSMain",			//entrypoint
@@ -314,7 +314,7 @@ bool Render::InitDevice()
 
 	// Compile the vertex shader code.
 	hr = D3DCompileFromFile(
-		L"Color.vs", 
+		L"shaders/color.vs", 
 		NULL, 
 		NULL, 
 		"ColorVertexShader", 
@@ -336,7 +336,7 @@ bool Render::InitDevice()
 
 	// Compile the pixel shader code.
 	hr = D3DCompileFromFile(
-			L"Color.ps", 
+			L"shaders/color.ps", 
 			NULL, 
 			NULL, 
 			"ColorPixelShader", 

@@ -1,0 +1,44 @@
+////////////////////////////////////////////////////////////////////////////////
+// Filename: color.vs
+////////////////////////////////////////////////////////////////////////////////
+
+
+/////////////
+// GLOBALS //
+/////////////
+cbuffer MatrixBuffer
+{
+	matrix worldMatrix;
+	matrix viewMatrix;
+	matrix projectionMatrix;
+};
+
+
+//////////////
+// TYPEDEFS //
+//////////////
+struct VertexInputType
+{
+    float3 position : POSITION;
+	float2 uv	: TEXCOORD;
+};
+
+struct PixelInputType
+{
+    float4 position : SV_POSITION;
+	float2 uv	: TEXCOORD;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Vertex Shader
+////////////////////////////////////////////////////////////////////////////////
+PixelInputType ColorVertexShader(VertexInputType input)
+{
+    PixelInputType output;
+
+    output.position = float4( input.position, 1.0f );
+	output.uv = input.uv;
+
+    return output;
+}
