@@ -67,7 +67,8 @@ bool InitWindow( int width, int height )
 	int pos_x, pos_y;
 	DEVMODE dmScreenSettings;
 	// Setup the screen settings depending on whether it is running in full screen or in windowed mode.
-	if(false/*full screen*/)
+	bool full_screen = true;
+	if(full_screen)
 	{
 		gWidth = GetSystemMetrics(SM_CXSCREEN);
 		gHeight = GetSystemMetrics(SM_CYSCREEN);

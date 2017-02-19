@@ -581,16 +581,16 @@ void Render::UpdateBuffers()
 	
 
 	tSphere spheres[MAX_SPHERES];
-	spheres[0].mPosition = Vector3(-1.5f, 4.0f, 4.0f);
+	spheres[0].mPosition = Vector3(-1.5f, 0.1f, 4.0f);
 	spheres[0].mRadius = m0;
-	spheres[1].mPosition = Vector3(-0.5f, 4.0f, 4.0f);
+	spheres[1].mPosition = Vector3(-0.5f, 0.2f, 4.0f);
 	spheres[1].mRadius = m1;
-	spheres[2].mPosition = Vector3(0.5f, 4.0f, 4.0f);
+	spheres[2].mPosition = Vector3(0.5f, 0.3f, 4.0f);
 	spheres[2].mRadius = m2;
-	spheres[3].mPosition = Vector3(1.5f, 4.0f, 4.0f);
+	spheres[3].mPosition = Vector3(1.5f, 0.4f, 4.0f);
 	spheres[3].mRadius = m3;
 
-	spheres[4].mPosition = Vector3(0.0f, 5.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
+	spheres[4].mPosition = Vector3(0.0f, 1.5f+0.5f*sinf(Game::Instance->GetTime()*0.5f), 4.0f);
 	spheres[4].mRadius = 0.75f;
 	mImmediateContext->UpdateSubresource(mSphereDataGPUBuffer, 0, 0, &spheres, sizeof(tSphere), MAX_SPHERES * sizeof(tSphere));
 
@@ -598,11 +598,11 @@ void Render::UpdateBuffers()
 	float big = 10000.0f;
 	tTri tris[MAX_TRIS];
 	tris[0].mV0 = Vector3(-big, 0, -big);
-	tris[0].mV1 = Vector3(big, 0, big);
+	tris[0].mV1 = Vector3(big-1, 0, big);
 	tris[0].mV2 = Vector3(big, 0, -big);
 	tris[1].mV0 = Vector3(-big, 0, -big);
 	tris[1].mV1 = Vector3(-big, 0, big);
-	tris[1].mV2 = Vector3(big, 0, big);
+	tris[1].mV2 = Vector3(big+1, 0, big);
 	mImmediateContext->UpdateSubresource(mTriDataGPUBuffer, 0, 0, &tris, sizeof(tTri), MAX_TRIS * sizeof(tTri));
 }
 
@@ -626,7 +626,7 @@ void Render::DoFrame()
 
 	mImmediateContext->CSSetShader(mComputeShader, NULL, 0);
 
-	const int threads_dim = 32;
+	const int threads_dim = 16;
 	mImmediateContext->Dispatch((gWidth + (threads_dim - 1)) / threads_dim, (gHeight + (threads_dim - 1)) / threads_dim, 1);
 
 	mImmediateContext->CSSetShader(NULL, NULL, 0);
@@ -658,7 +658,7 @@ void Render::DoFrame()
 
 	mImmediateContext->PSSetShaderResources(0, 1, ppSRVNULL);
 
-	mSwapChain->Present(0, 0);
+	mSwapChain->Present(1, 0);
 
 }
 

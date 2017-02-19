@@ -35,6 +35,7 @@ struct RayCastResult
 	int mNearestSphereID;
 	int mNearestTriID;
 	float mCollisionDistance;
+	float3 mCollisionNormal;
 };
 
 
@@ -79,7 +80,7 @@ void writeToPixel(int x, int y, float3 colour)
 
 
 
-bool SphereIsHitByRay(Sphere sphere, Ray ray, inout float distance)
+bool SphereIsHitByRay(Sphere sphere, Ray ray, inout float distance, inout float3 normal)
 {
 	float3 to_sphere = sphere.mPosition - ray.mPoint;
 	float dot_p = dot(to_sphere, ray.mDirection);
@@ -102,12 +103,13 @@ bool SphereIsHitByRay(Sphere sphere, Ray ray, inout float distance)
 		float3 point_on_surface = point_on_ray - (ray.mDirection * length_back);
 
 		distance = length(point_on_surface - ray.mPoint);
+		normal = normalize(point_on_surface - sphere.mPosition);
 	}
 
 	return sphere_hit;
 }
 
-bool TriIsHitByRay(Tri tri, Ray ray, inout float distance)
+bool TriIsHitByRay(Tri tri, Ray ray, inout float distance, inout float3 normal)
 {
 	//https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
 	//if this doesn't work out, try https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
@@ -144,23 +146,29 @@ bool TriIsHitByRay(Tri tri, Ray ray, inout float distance)
 		return false;
 	}
 
+	normal = float3(0, 1, 0);  //ACTUALLY GET THE NORMAL HERE
 	return true;
 }
 
 
 RayCastResult FindNearestCollision(Ray ray)
 {
+	//temp out vars
+	float distance = 0;
+	float3 normal = float3(0, 0, 0);
+
 	float near_dist = 999999.f;
+	float3 near_normal = float3(0, 0, 0);
 	int near_sphere_id = INVALID_ID;
 	for (int i = 0; i < gNumSpheres; ++i)
 	{
-		float distance = 0;
-		if (SphereIsHitByRay(SphereBuffer[i], ray, distance))
+		if (SphereIsHitByRay(SphereBuffer[i], ray, distance, normal))
 		{
 			if (distance < near_dist)
 			{
 				near_sphere_id = i;
 				near_dist = distance;
+				near_normal = normal;
 			}
 		}
 	}
@@ -168,14 +176,14 @@ RayCastResult FindNearestCollision(Ray ray)
 	int near_tri_id = INVALID_ID;
 	for (i = 0; i < gNumTris; ++i)
 	{
-		float distance = 0;
-		if (TriIsHitByRay(TriBuffer[i], ray, distance))
+		if (TriIsHitByRay(TriBuffer[i], ray, distance, normal))
 		{
 			if (distance < near_dist)
 			{
 				near_tri_id = i;
 				near_sphere_id = INVALID_ID;
 				near_dist = distance;
+				near_normal = normal;
 			}
 		}
 	}
@@ -187,6 +195,7 @@ RayCastResult FindNearestCollision(Ray ray)
 	res.mNearestSphereID = near_sphere_id;
 	res.mNearestTriID = near_tri_id;
 	res.mCollisionDistance = near_dist;
+	res.mCollisionNormal = near_normal;
 
 	return res;
 }
@@ -243,8 +252,7 @@ float BlinnPhong(float3 light, float3 view, float3 normal)
 	return l_dot_n + spec;
 }
 
-
-float3 CalculateLighting( float3 position, float3 normal, float3 view )
+float3 CalculateLighting( float3 position, float3 normal, float3 view)
 {
 	//get all the lights, loop over them and test for vision	
 	float3 c = float3(0.05, 0.05, 0.05);
@@ -262,66 +270,83 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view )
 
 		if((res.mNearestSphereID == INVALID_ID && res.mNearestTriID == INVALID_ID) || light_distance < res.mCollisionDistance )
 		{
-			//float diffuse = OrenNayerDiffuse( to_light, view, normal, 0.7f );
 			float diffuse = BlinnPhong(to_light, view, normal);
 			float intensity = 1 / (light_distance);
 
 			c = c + LightBuffer[i].mColour * diffuse * intensity;
 		}
 	}
-
+	
 	return c;
 }
 
-float3 SphereGetColourFromRay( Sphere sphere, Ray ray, float distance )
-{
-	//TOOD, OPTIMIZE THIS BASED ON KNOWING distance already
-	float3 to_sphere = sphere.mPosition - ray.mPoint;
-	float dot_p = dot( to_sphere, ray.mDirection );
-	float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
-	float3 sphere_to_ray = point_on_ray - sphere.mPosition;
 
-	float length_sphere_to_ray = length(sphere_to_ray);
-
-	float length_back = sqrt( sphere.mRadius * sphere.mRadius - length_sphere_to_ray * length_sphere_to_ray );
-	float3 point_on_surface = point_on_ray - (ray.mDirection * length_back);
-	float3 normal = normalize(point_on_surface - sphere.mPosition);
-
-	return CalculateLighting( point_on_surface, normal, ray.mDirection );
-}
-
-float3 TriGetColourFromRay(Tri tri, Ray ray, float distance)
-{
-	float3 point_on_surface = ray.mPoint + ray.mDirection * distance;
-	float3 normal = float3(0, 1, 0);// normalize(cross(tri.mV1 - tri.mV0, tri.mV2 - tri.mV0));
-
-	return CalculateLighting(point_on_surface, normal, ray.mDirection);
-}
-
-
-float3 LightPassThroughGlow(Ray ray)
+float3 LightPassThroughGlow(float max_dist, Ray ray)
 {
 	float3 contribution = 0;
 	for (int i = 0; i < gNumLights; ++i)
 	{
 		float3 to_light = LightBuffer[i].mPosition - ray.mPoint;
-		float dot_p = dot(to_light, ray.mDirection);
-
-		if (dot_p > 0.0f)
+		if (length(to_light) < max_dist)
 		{
-			float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
-			float3 light_to_ray = point_on_ray - LightBuffer[i].mPosition;
-			float dist_to_ray = length(light_to_ray);
+			float dot_p = dot(to_light, ray.mDirection);
 
-			if (dist_to_ray < 0.1f)
+			if (dot_p > 0.0f)
 			{
-				float f = lerp(1,0, dist_to_ray*10);
-				contribution += LightBuffer[i].mColour * f;
+				float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
+				float3 light_to_ray = point_on_ray - LightBuffer[i].mPosition;
+				float dist_to_ray = length(light_to_ray);
+
+				if (dist_to_ray < 0.1f)
+				{
+					float f = lerp(1, 0, dist_to_ray * 10);
+					contribution += LightBuffer[i].mColour * f;
+				}
 			}
 		}
 	}
 	return contribution;
 }
+
+float3 GetColourFromRay(Ray ray)
+{
+	//Get the lighting from the nearest primitive
+	float3 pixel = float3(0, 0, 0);
+
+	float bounce_scale = 1.0f;
+	while (bounce_scale > 0.0f)
+	{
+		float3 ray_colour = float3(0, 0, 0);
+
+		float next_bounce_scale = 0;
+		//Find the nearest primitive
+		RayCastResult res = FindNearestCollision(ray);
+
+		if (res.mNearestSphereID != INVALID_ID || res.mNearestTriID != INVALID_ID)
+		{
+			float3 point_on_surface = ray.mPoint + ray.mDirection * res.mCollisionDistance;
+			ray_colour = CalculateLighting(point_on_surface, res.mCollisionNormal, ray.mDirection);
+			next_bounce_scale = bounce_scale * 0.35f;
+
+			ray.mPoint = point_on_surface;
+			ray.mDirection = reflect(ray.mDirection, res.mCollisionNormal);
+		}
+		else
+		{
+			float x = lerp(0.05, 1.0, ray.mDirection.y);
+			ray_colour = float3(x, x, x);
+			next_bounce_scale = 0.0f;
+		}
+		ray_colour += LightPassThroughGlow(res.mCollisionDistance, ray);
+
+
+		pixel += ray_colour * bounce_scale;		
+		bounce_scale = next_bounce_scale;
+	}
+
+	return pixel;
+}
+
 
 float3 ToneMap(float3 pixel)
 {
@@ -329,7 +354,7 @@ float3 ToneMap(float3 pixel)
 }
 
 
-[numthreads(32, 32, 1)]
+[numthreads(16, 16, 1)]
 void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 {
 	//Setup ray for this pixel
@@ -353,27 +378,8 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	ray.mPoint = gCameraPosition;
 	ray.mDirection = ray_dir;
 
-
-	//Find the nearest primitive
-	RayCastResult res = FindNearestCollision(ray);
-
-
-	//Get the lighting from the nearest primitive
-	float3 pixel = float3(0, 0, 0);
-	if (res.mNearestSphereID != INVALID_ID)
-	{
-		pixel = SphereGetColourFromRay(SphereBuffer[res.mNearestSphereID], ray, res.mCollisionDistance);
-	}
-	else if(res.mNearestTriID != INVALID_ID)
-	{
-		pixel = TriGetColourFromRay(TriBuffer[res.mNearestTriID], ray, res.mCollisionDistance);
-	}
-	else
-	{
-		float x = lerp( 0.05, 1.0, ray.mDirection.y );
-		pixel = float3(x, x, x);
-	}
-	pixel += LightPassThroughGlow(ray);
+	float3 pixel = GetColourFromRay(ray);
+	
 	pixel = ToneMap(pixel);
 
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );
