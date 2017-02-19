@@ -9,8 +9,10 @@
 
 
 HWND gHWnd = NULL;
-int gWidth = 0;
-int gHeight = 0;
+int gWidth = 1280;
+int gHeight = 720;
+bool gVsync = false;
+bool gFullScreen = false;
 
 
 
@@ -37,7 +39,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 	return 0;
 }
 
-bool InitWindow( int width, int height )
+bool InitWindow()
 {
 	WNDCLASSEX wc;
 
@@ -67,11 +69,12 @@ bool InitWindow( int width, int height )
 	int pos_x, pos_y;
 	DEVMODE dmScreenSettings;
 	// Setup the screen settings depending on whether it is running in full screen or in windowed mode.
-	bool full_screen = true;
-	if(full_screen)
+	
+	if(gFullScreen)
 	{
-		gWidth = GetSystemMetrics(SM_CXSCREEN);
-		gHeight = GetSystemMetrics(SM_CYSCREEN);
+		//Force to native res
+		//gWidth = GetSystemMetrics(SM_CXSCREEN);
+		//gHeight = GetSystemMetrics(SM_CYSCREEN);
 
 		// If full screen set the screen to maximum size of the users desktop and 32bit.
 		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
@@ -89,8 +92,6 @@ bool InitWindow( int width, int height )
 	}
 	else
 	{
-		gWidth = width;
-		gHeight = height;
 
 		// Place the window in the middle of the screen.
 		pos_x = (GetSystemMetrics(SM_CXSCREEN) - gWidth)  / 2;
@@ -122,8 +123,7 @@ bool InitWindow( int width, int height )
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
 {
-	bool initialized = InitWindow(1920, 1080);
-	if( !initialized )
+	if( !InitWindow())
 	{
 		exit(-1);
 	}
@@ -146,61 +146,55 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 	bool done = false;
 	while( !done )
 	{
-		// Handle the windows messages.
-		MSG msg;
-		if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-
-
 		Input::Instance->SetInputMotion(IX_MOUSE_X, 0);
 		Input::Instance->SetInputMotion(IX_MOUSE_Y, 0);
 
-		// If windows signals to end the application then exit out.
-		if(msg.message == WM_QUIT)
+		// Handle the windows messages.
+		MSG msg;
+		while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			done = true;
-		}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 
-		switch (msg.message)
-		{
-			// Check if a key has been pressed on the keyboard.
-			case WM_KEYDOWN:
+			// If windows signals to end the application then exit out.
+			if(msg.message == WM_QUIT)
 			{
-				Input::Instance->SetKeyState((IX_KEY)msg.wParam, true);
+				done = true;
 			}
-			break;
 
-			// Check if a key has been released on the keyboard.
-			case WM_KEYUP:
+			switch (msg.message)
 			{
-				Input::Instance->SetKeyState((IX_KEY)msg.wParam, false);
-			}
-			break;
-
-			case WM_MOUSEMOVE:
-			{
-				if (gHWnd == GetForegroundWindow())
+				// Check if a key has been pressed on the keyboard.
+				case WM_KEYDOWN:
 				{
-					POINT pos_m;
-					GetCursorPos(&pos_m);
-					int x_pos = pos_m.x;
-					int y_pos = pos_m.y;
-
-					SetCursorPos(mid_width, mid_height);
-
-					float x_move = (float)(x_pos - mid_width);
-					float y_move = (float)(y_pos - mid_height);
-
-					Input::Instance->SetInputMotion(IX_MOUSE_X, x_move);
-					Input::Instance->SetInputMotion(IX_MOUSE_Y, y_move);
+					Input::Instance->SetKeyState((IX_KEY)msg.wParam, true);
 				}
+				break;
+
+				// Check if a key has been released on the keyboard.
+				case WM_KEYUP:
+				{
+					Input::Instance->SetKeyState((IX_KEY)msg.wParam, false);
+				}
+				break;
 			}
-			break;
 		}
 
+		if (gHWnd == GetForegroundWindow())
+		{
+			POINT pos_m;
+			GetCursorPos(&pos_m);
+			int x_pos = pos_m.x;
+			int y_pos = pos_m.y;
+
+			SetCursorPos(mid_width, mid_height);
+
+			float x_move = (float)(x_pos - mid_width);
+			float y_move = (float)(y_pos - mid_height);
+
+			Input::Instance->SetInputMotion(IX_MOUSE_X, x_move);
+			Input::Instance->SetInputMotion(IX_MOUSE_Y, y_move);
+		}
 
 		game->GameLoop();
 	}

@@ -78,6 +78,8 @@ const int MAX_TRIS = 32;
 extern HWND gHWnd;
 extern int gWidth;
 extern int gHeight;
+extern bool gFullScreen;
+extern bool gVsync;
 
 
 Render* Render::Instance = NULL;
@@ -119,7 +121,13 @@ bool Render::InitDevice()
 	sd.OutputWindow = gHWnd;
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
-	sd.Windowed = TRUE;
+	sd.Windowed = !gFullScreen;
+	//sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+
+	/*if (gVsync)
+	{
+		mSwapChain*/
+
 
 	D3D_DRIVER_TYPE         driverType = D3D_DRIVER_TYPE_HARDWARE;
 	D3D_FEATURE_LEVEL       desired_featureLevel = D3D_FEATURE_LEVEL_11_0;
@@ -658,8 +666,14 @@ void Render::DoFrame()
 
 	mImmediateContext->PSSetShaderResources(0, 1, ppSRVNULL);
 
-	mSwapChain->Present(1, 0);
-
+	if (gVsync)
+	{
+		mSwapChain->Present(1, 0);
+	}
+	else
+	{
+		mSwapChain->Present(0, 0);
+	}
 }
 
 
