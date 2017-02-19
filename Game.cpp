@@ -23,7 +23,7 @@ Game::Game()
 {
 	Instance = this;
 	
-	mCam.SetPosition(Vector3(0, 4, -5));
+	mCam.SetPosition(Vector3(0, 1, -3));
 	mCam.SetLookDir(Vector3(0, 0, 1));
 	mCam.SetUpDir(Vector3(0, 1, 0));
 

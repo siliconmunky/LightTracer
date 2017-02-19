@@ -314,7 +314,9 @@ float3 GetColourFromRay(Ray ray)
 	float3 pixel = float3(0, 0, 0);
 
 	float bounce_scale = 1.0f;
-	while (bounce_scale > 0.0f)
+	const int max_bounces = 3;
+	int bounces = -1;
+	while (bounce_scale > 0.0f && bounces < max_bounces)
 	{
 		float3 ray_colour = float3(0, 0, 0);
 
@@ -342,6 +344,8 @@ float3 GetColourFromRay(Ray ray)
 
 		pixel += ray_colour * bounce_scale;		
 		bounce_scale = next_bounce_scale;
+		
+		bounces++;
 	}
 
 	return pixel;
