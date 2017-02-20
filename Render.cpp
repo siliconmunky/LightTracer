@@ -267,7 +267,7 @@ bool Render::InitDevice()
 	ID3DBlob* pErrorBlob = NULL;
 	ID3DBlob* pBlob = NULL;
 	hr = D3DCompileFromFile(
-		L"shaders/RayCast.hlsl", 
+		L"shaders/raycast.hlsl", 
 		NULL,				//defines
 		NULL,				//includes
 		"CSMain",			//entrypoint

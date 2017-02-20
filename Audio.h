@@ -2,8 +2,8 @@
 
 
 #define AUDIO_FX_TUPLE\
-	AUDIO_FX_DATA( AFX_HELLO, "Sound/hello.wav", false )\
-	AUDIO_FX_DATA( AFX_BG_HUM, "Sound/Ambience/ambience_background_hum.wav", true )\
+	AUDIO_FX_DATA( AFX_HELLO, "sound/hello.wav", false )\
+	AUDIO_FX_DATA( AFX_BG_HUM, "sound/ambience/ambience_background_hum.wav", true )\
 
 
 

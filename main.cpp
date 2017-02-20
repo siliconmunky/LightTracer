@@ -123,6 +123,16 @@ bool InitWindow()
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
 {
+	TCHAR curr_dir[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, curr_dir);
+	TCHAR* end = wcsstr(curr_dir, L"\\bin");
+	if(end != NULL)
+	{
+		*end = 0; //strip out the \bin from the working directory
+		SetCurrentDirectory(curr_dir);
+	}
+
+
 	if( !InitWindow())
 	{
 		exit(-1);
