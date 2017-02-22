@@ -11,8 +11,8 @@
 HWND gHWnd = NULL;
 int gWidth = 1920;
 int gHeight = 1080;
-bool gVsync = true;
-bool gFullScreen = true;
+bool gVsync = false;
+bool gFullScreen = false;
 
 
 
@@ -131,6 +131,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 		*end = 0; //strip out the \bin from the working directory
 		SetCurrentDirectory(curr_dir);
 	}
+
+	srand(time(NULL));
 
 
 	if( !InitWindow())

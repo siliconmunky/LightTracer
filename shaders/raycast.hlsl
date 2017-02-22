@@ -383,7 +383,10 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	ray.mDirection = ray_dir;
 
 	float3 pixel = GetColourFromRay(ray);
-	
+
+	//pixel = pixel * pixel;
+	//pixel = sqrt(pixel);
+
 	pixel = ToneMap(pixel);
 
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );

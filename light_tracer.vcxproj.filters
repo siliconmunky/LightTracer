@@ -9,6 +9,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\dx">
+      <UniqueIdentifier>{d0404aa0-44ed-408f-ade8-6ca10d7a1cd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -87,6 +90,9 @@
     </ClCompile>
     <ClCompile Include="Audio.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="middleware\DirectXTex-master\WICTextureLoader\WICTextureLoader.cpp">
+      <Filter>Source Files\dx</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

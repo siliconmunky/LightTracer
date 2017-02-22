@@ -4,7 +4,7 @@
 
 #include "Camera.h"
 
-
+#include "WICTextureLoader.h"
 
 
 struct VertexType
@@ -67,6 +67,12 @@ __declspec(align(16)) struct tPrimitiveCB
 	int num_tris;
 };
 
+__declspec(align(16)) struct tFrameValuesCB
+{
+	float time;
+	float noise_offset_x;
+	float noise_offset_y;
+};
 
 
 const int MAX_LIGHTS = 32;
@@ -535,6 +541,51 @@ bool Render::InitDevice()
 	}
 
 
+	D3D11_BUFFER_DESC bd_fv;
+	ZeroMemory(&bd_fv, sizeof(bd_fv));
+	bd_fv.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd_fv.ByteWidth = sizeof(tFrameValuesCB);
+	bd_fv.Usage = D3D11_USAGE_DEFAULT;
+	hr = mD3DDevice->CreateBuffer(&bd_prims, 0, &mFrameValuesConstantBuffer);
+	if (hr != S_OK)
+	{
+		return false;
+	}
+
+
+	//----------------------------------------------
+	// Setup noise texture
+
+	// Create a texture sampler state description.
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+	hr = mD3DDevice->CreateSamplerState(&samplerDesc, &mNoiseSamplerState);
+	if (hr != S_OK)
+	{
+		return false;
+	}
+
+	hr = DirectX::CreateWICTextureFromFile(mD3DDevice, L"textures/noise.png", &mNoiseTexture, &mNoiseSRV );
+	if (hr != S_OK)
+	{
+		return false;
+	}
+
+
 	return true;
 }
 
@@ -563,6 +614,14 @@ void Render::UpdateBuffers()
 	mImmediateContext->UpdateSubresource(mCameraConstantBuffer, 0, 0, &cb_camera, 0, 0);
 
 
+	tFrameValuesCB cb_fv;
+	cb_fv.time = Game::Instance->GetTime();
+	cb_fv.noise_offset_x = RandFloat();
+	cb_fv.noise_offset_y = RandFloat();
+	mImmediateContext->UpdateSubresource(mFrameValuesConstantBuffer, 0, 0, &cb_fv, 0, 0);
+
+
+
 	//STUBBED NUMBER OF PRIMS
 
 	tPrimitiveCB cb_prims;
@@ -571,8 +630,9 @@ void Render::UpdateBuffers()
 	cb_prims.num_tris = 2;
 	mImmediateContext->UpdateSubresource(mPrimitivesConstantBuffer, 0, 0, &cb_prims, 0, 0);	
 
-
-	Vector3 colour = Vector3(48.0f / 256, 75.0f / 256, 54.0f / 256) * 7.0f;
+	float c = 0.8f;
+	//c = c*c;
+	Vector3 colour = Vector3(c, c, c);
 	tPointLight lights[MAX_LIGHTS];
 	lights[0].mPosition = Vector3(1.0f + cosf(Game::Instance->GetTime()), 8.4f, 3.0f + sinf(Game::Instance->GetTime()));
 	lights[0].mColour = colour;
@@ -626,6 +686,7 @@ void Render::DoFrame()
 	mImmediateContext->CSSetConstantBuffers(0, 1, &mResConstantBuffer);
 	mImmediateContext->CSSetConstantBuffers(1, 1, &mCameraConstantBuffer);
 	mImmediateContext->CSSetConstantBuffers(2, 1, &mPrimitivesConstantBuffer);
+	mImmediateContext->CSSetConstantBuffers(3, 1, &mFrameValuesConstantBuffer);
 	mImmediateContext->CSSetShaderResources(0, 1, &mLightDataGPUBufferView);
 	mImmediateContext->CSSetShaderResources(1, 1, &mSphereDataGPUBufferView);
 	mImmediateContext->CSSetShaderResources(2, 1, &mTriDataGPUBufferView);
@@ -658,13 +719,19 @@ void Render::DoFrame()
 
 	mImmediateContext->VSSetShader(mVertexShader, NULL, 0);
 	mImmediateContext->PSSetShader(mPixelShader, NULL, 0);
-	mImmediateContext->PSSetShaderResources(0, 1, &mDestDataSRV);
+
+
+	mImmediateContext->PSSetShaderResources(0, 1, &mNoiseSRV);
+	mImmediateContext->PSSetSamplers(0, 1, &mNoiseSamplerState);
+	mImmediateContext->PSSetShaderResources(1, 1, &mDestDataSRV);
 	mImmediateContext->PSSetConstantBuffers(0, 1, &mResConstantBuffer);
+	mImmediateContext->PSSetConstantBuffers(1, 1, &mFrameValuesConstantBuffer);
 
 
 	mImmediateContext->Draw(mVertexCount, 0); 	// Render the triangle.
 
 	mImmediateContext->PSSetShaderResources(0, 1, ppSRVNULL);
+	mImmediateContext->PSSetShaderResources(1, 1, ppSRVNULL);
 
 	if (gVsync)
 	{

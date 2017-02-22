@@ -42,13 +42,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>middleware\fmod\api\lowlevel\inc;$(IncludePath)</IncludePath>
+    <IncludePath>middleware\fmod\api\lowlevel\inc;middleware\DirectXTex-master\WICTextureLoader;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)$(Configuration)\;middleware\fmod\api\lowlevel\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>middleware\fmod\api\lowlevel\inc;$(IncludePath)</IncludePath>
+    <IncludePath>middleware\fmod\api\lowlevel\inc;middleware\DirectXTex-master\WICTextureLoader;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)$(Configuration)\;middleware\fmod\api\lowlevel\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\</OutDir>
   </PropertyGroup>
@@ -103,6 +103,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="middleware\DirectXTex-master\WICTextureLoader\WICTextureLoader.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="scene\PointLight.cpp" />
     <ClCompile Include="scene\Scene.cpp" />

@@ -44,6 +44,7 @@ private:
 
 	ID3D11Buffer*				mResConstantBuffer;
 	ID3D11Buffer*				mCameraConstantBuffer;
+	ID3D11Buffer*				mFrameValuesConstantBuffer;
 	ID3D11Buffer*				mPrimitivesConstantBuffer;
 
 
@@ -64,6 +65,11 @@ private:
 	ID3D11VertexShader*			mVertexShader;
 
 	ID3D11PixelShader*			mPixelShader;
+	
+
+	ID3D11Resource*				mNoiseTexture;
+	ID3D11SamplerState*			mNoiseSamplerState;
+	ID3D11ShaderResourceView*	mNoiseSRV;
 
 };
 
