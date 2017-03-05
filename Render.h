@@ -3,10 +3,6 @@
 #include "BasicDefs.h"
 
 
-/*#include <d3d11.h>
-#include <DXGI.h>
-#include "D3DCompiler.h"*/
-
 #include <d3d12.h>
 #include <wrl.h>
 #include <vector>
@@ -81,38 +77,9 @@ private:
 	ComPtr<ID3D12DescriptorHeap> mSRVUAVDescriptorHeap;
 	std::int32_t				mSRVUAVDescriptorSize;
 
-	ComPtr<ID3D12Resource> mRayCastOutput; 
-	ComPtr<ID3D12Resource> mRayCastUAV;
-	ComPtr<ID3D12Resource> mRayCastSRV;
+	ComPtr<ID3D12Resource> mRayCastOutput;
 
 	ComPtr<ID3D12Resource> mUploadImage;
 	ComPtr<ID3D12Resource> mNoiseTexture;
-	
-
-	//whats this for?
-	std::vector<std::uint8_t> imageData_;
-
-
-
-
-
-
-/*
-	ID3D11Buffer*				mLightDataGPUBuffer;
-	ID3D11ShaderResourceView*	mLightDataGPUBufferView;
-	ID3D11Buffer*				mSphereDataGPUBuffer;
-	ID3D11ShaderResourceView*	mSphereDataGPUBufferView;
-	ID3D11Buffer*				mTriDataGPUBuffer;
-	ID3D11ShaderResourceView*	mTriDataGPUBufferView;
-
-
-	ID3D11Buffer*				mCSDestDataBuffer;
-	ID3D11UnorderedAccessView*	mCSDestDataBufferView;
-	ID3D11ShaderResourceView*	mDestDataSRV;
-
-
-	ID3D11ComputeShader*		mComputeShader;
-*/
-
 };
 

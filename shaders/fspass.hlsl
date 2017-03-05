@@ -49,7 +49,7 @@ float4 PSMain(PSInput input) : SV_TARGET
 	result.a = 1.0;
 
 	const float tile_scale = 50;  //50 is a hack to tile many times, seems sufficient
-	float dither = 10*NoiseTexture.Sample(NoiseSS, (uv + float2(gNoiseOffsetX, gNoiseOffsetY)) * tile_scale).r;
+	float dither = NoiseTexture.Sample(NoiseSS, (uv + float2(gNoiseOffsetX, gNoiseOffsetY)) * tile_scale).r;
 	dither = dither / 150.0; //150 is a hack, produces a good enough result
 	
 	result.rgb += dither;
