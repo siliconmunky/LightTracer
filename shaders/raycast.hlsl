@@ -1,7 +1,13 @@
+
+#include "shared.h"
+
+
 struct Pixel
 {
-    float4 mColour;
+	float4 mColour;
 };
+
+RWStructuredBuffer<Pixel> BufferOut : register(u0);
 
 struct Ray
 {
@@ -9,24 +15,6 @@ struct Ray
 	float3 mDirection;
 };
 
-struct PointLight
-{
-	float3 mPosition;
-	float3 mColour;
-};
-
-struct Sphere
-{
-	float3 mPosition;
-	float mRadius;
-};
-
-struct Tri
-{
-	float3 mV0;
-	float3 mV1;
-	float3 mV2;
-};
 
 
 #define INVALID_ID -1
@@ -38,36 +26,6 @@ struct RayCastResult
 	float3 mCollisionNormal;
 };
 
-
-
-
-cbuffer ConstantBufferResolution : register(b0)
-{
-    int gWidth;
-    int gHeight;
-};
-
-cbuffer ConstantBufferCamera : register(b1)
-{
-    float3 gCameraPosition;
-	float cam_orientation_00, cam_orientation_01, cam_orientation_02;
-	float cam_orientation_10, cam_orientation_11, cam_orientation_12;
-	float cam_orientation_20, cam_orientation_21, cam_orientation_22; 
-};
-
-cbuffer ConstantBufferPrimitives : register(b2)
-{
-	int gNumLights;
-	int gNumSpheres;
-	int gNumTris;
-};
-
-StructuredBuffer<PointLight> LightBuffer : register(t0);
-StructuredBuffer<Sphere> SphereBuffer : register(t1);
-StructuredBuffer<Tri> TriBuffer : register(t2);
-
-
-RWStructuredBuffer<Pixel> BufferOut : register(u0);
 
 
 
@@ -162,7 +120,7 @@ RayCastResult FindNearestCollision(Ray ray)
 	int near_sphere_id = INVALID_ID;
 	for (int i = 0; i < gNumSpheres; ++i)
 	{
-		if (SphereIsHitByRay(SphereBuffer[i], ray, distance, normal))
+		if (SphereIsHitByRay(gSpheres[i], ray, distance, normal))
 		{
 			if (distance < near_dist)
 			{
@@ -176,7 +134,7 @@ RayCastResult FindNearestCollision(Ray ray)
 	int near_tri_id = INVALID_ID;
 	for (i = 0; i < gNumTris; ++i)
 	{
-		if (TriIsHitByRay(TriBuffer[i], ray, distance, normal))
+		if (TriIsHitByRay(gTris[i], ray, distance, normal))
 		{
 			if (distance < near_dist)
 			{
@@ -259,7 +217,7 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view)
 
 	for( int i = 0; i < gNumLights; ++i )
 	{
-		float3 to_light = LightBuffer[i].mPosition - position;
+		float3 to_light = gLights[i].mPosition - position;
 		float light_distance = length(to_light);
 		to_light = normalize(to_light);
 
@@ -273,7 +231,7 @@ float3 CalculateLighting( float3 position, float3 normal, float3 view)
 			float diffuse = BlinnPhong(to_light, view, normal);
 			float intensity = 1 / (light_distance);
 
-			c = c + LightBuffer[i].mColour * diffuse * intensity;
+			c = c + gLights[i].mColour * diffuse * intensity;
 		}
 	}
 	
@@ -286,7 +244,7 @@ float3 LightPassThroughGlow(float max_dist, Ray ray)
 	float3 contribution = 0;
 	for (int i = 0; i < gNumLights; ++i)
 	{
-		float3 to_light = LightBuffer[i].mPosition - ray.mPoint;
+		float3 to_light = gLights[i].mPosition - ray.mPoint;
 		if (length(to_light) < max_dist)
 		{
 			float dot_p = dot(to_light, ray.mDirection);
@@ -294,13 +252,13 @@ float3 LightPassThroughGlow(float max_dist, Ray ray)
 			if (dot_p > 0.0f)
 			{
 				float3 point_on_ray = ray.mPoint + (ray.mDirection * dot_p);
-				float3 light_to_ray = point_on_ray - LightBuffer[i].mPosition;
+				float3 light_to_ray = point_on_ray - gLights[i].mPosition;
 				float dist_to_ray = length(light_to_ray);
 
 				if (dist_to_ray < 0.1f)
 				{
 					float f = lerp(1, 0, dist_to_ray * 10);
-					contribution += LightBuffer[i].mColour * f;
+					contribution += gLights[i].mColour * f;
 				}
 			}
 		}
@@ -379,7 +337,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	ray_dir = mul( gCameraOrientation, ray_dir);
 
 	Ray ray;
-	ray.mPoint = gCameraPosition;
+	ray.mPoint = float3( gCameraPosition_x, gCameraPosition_y, gCameraPosition_z );
 	ray.mDirection = ray_dir;
 
 	float3 pixel = GetColourFromRay(ray);
