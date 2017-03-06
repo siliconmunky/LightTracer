@@ -1,7 +1,9 @@
 struct PointLight
 {
 	float3 mPosition;
+	float padding1;
 	float3 mColour;
+	float padding2;
 };
 
 struct Sphere
@@ -13,8 +15,11 @@ struct Sphere
 struct Tri
 {
 	float3 mV0;
+	float padding1;
 	float3 mV1;
+	float padding2;
 	float3 mV2;
+	float padding3;
 };
 
 #define MAX_LIGHTS 32

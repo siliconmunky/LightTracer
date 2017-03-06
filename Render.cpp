@@ -31,7 +31,9 @@ struct tPixel
 struct tPointLight
 {
 	Vector3 mPosition;
+	float padding1;
 	Vector3 mColour;
+	float padding2;
 };
 
 struct tSphere
@@ -43,8 +45,11 @@ struct tSphere
 struct tTri
 {
 	Vector3 mV0;
+	float padding1;
 	Vector3 mV1;
+	float padding2;
 	Vector3 mV2;
+	float padding3;
 };
 
 
@@ -162,7 +167,7 @@ bool Render::InitDevice()
 	}
 	else
 	{
-		D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&mD3DDevice) );
+		D3D12CreateDevice( NULL, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&mD3DDevice) );
 	}
 	
 
