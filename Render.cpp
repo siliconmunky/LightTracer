@@ -158,7 +158,7 @@ bool Render::InitDevice()
 	/////////////////////////////  CreateDeviceAndSwapChain  /////////////////////////////
 	ComPtr<IDXGIFactory4> factory;
 	CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory));
-	if (true) //use warp device
+	if (false) //use warp device
 	{
 		ComPtr<IDXGIAdapter> warpAdapter;
 		factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
