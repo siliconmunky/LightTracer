@@ -22,8 +22,7 @@ public:
 
 	float GetTime();
 
-
-
+	
 	Input mInput;
 	Camera mCam;
 	Render mRender;
@@ -35,6 +34,8 @@ private:
 
 	
 	void HandleInput(float dt);
+	
+	void CalculateFPS(float dt);
 
 	AfxHandle mHelloAfx;
 	AfxHandle mHumAfx;

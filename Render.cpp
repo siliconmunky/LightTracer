@@ -794,9 +794,7 @@ void Render::FinalizeRender()
 
 void Render::Present()
 {
-	//todo, use gVsync
-
-	mSwapChain->Present(1, 0);
+	mSwapChain->Present(gVsync ? 1 : 0, 0);
 
 	// Mark the fence for the current frame.
 	const auto fence_value = mCurrentFenceValue;

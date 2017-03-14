@@ -49,6 +49,7 @@ void Game::GameLoop()
 	mPrevFrameTime = now;
 
 
+	CalculateFPS(dt);
 	HandleInput(dt);
 
 	mAudio.Update(dt);
@@ -70,6 +71,25 @@ void Game::GameLoop()
 
 
 	mInput.EndFrame();
+}
+
+void Game::CalculateFPS(float dt)
+{
+	const int num_frames = 64;
+	static float fps_avgs[num_frames];
+	static int frame = 0;
+	fps_avgs[frame] = 1.0f / dt;
+	frame = (frame + 1) % num_frames;
+	float fps_avg = 0.0f;
+	for (int i = 0; i < num_frames; ++i)
+	{
+		fps_avg += fps_avgs[i];
+	}
+	fps_avg /= num_frames;
+	if (frame == 0)
+	{
+		Log::Printf("FPS %f\n", fps_avg);
+	}
 }
 
 
