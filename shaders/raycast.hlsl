@@ -312,6 +312,16 @@ float3 GetColourFromRay(Ray ray)
 
 float3 ToneMap(float3 pixel)
 {
+	pixel = pixel * pixel;
+
+	// Linear to sRGB.
+	//pixel = sqrt(pixel);
+	
+	// Add additional nonlinearities to shadows and highlights.
+	//pixel = smoothstep(0.0, 1.0, pixel);
+	//return pixel;
+	
+	
 	return pixel / (pixel + 1);
 }
 
@@ -341,10 +351,7 @@ void CSMain( uint3 dispatchThreadID : SV_DispatchThreadID )
 	ray.mDirection = ray_dir;
 
 	float3 pixel = GetColourFromRay(ray);
-
-	//pixel = pixel * pixel;
-	//pixel = sqrt(pixel);
-
+	
 	pixel = ToneMap(pixel);
 
 	writeToPixel( dispatchThreadID.x, dispatchThreadID.y, pixel );

@@ -132,7 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 		SetCurrentDirectory(curr_dir);
 	}
 
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 
 
 	if( !InitWindow())
