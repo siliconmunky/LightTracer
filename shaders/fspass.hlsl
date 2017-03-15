@@ -16,9 +16,9 @@ struct tPixel
 {
     float4 mColour;
 };
-StructuredBuffer<tPixel> ComputeOutputBuffer : register(t0);
+StructuredBuffer<tPixel> ComputeOutputBuffer : register(t1);
 
-Texture2D NoiseTexture : register(t1);
+Texture2D NoiseTexture : register(t2);
 SamplerState NoiseSS : register(s0);
 
 

@@ -266,7 +266,7 @@ bool Render::InitDevice()
 	///////////////////////////// Descriptor Heaps /////////////////////////////
 	// We need one descriptor heap to store our texture SRV which cannot go into the root signature. So create a SRV type heap with one entry
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-	descriptorHeapDesc.NumDescriptors = 4;
+	descriptorHeapDesc.NumDescriptors = 3;
 	// This heap contains SRV, UAV or CBVs -- in our case one SRV
 	descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	descriptorHeapDesc.NodeMask = 0;
@@ -297,32 +297,34 @@ bool Render::InitDevice()
 	}
 	
 	//FS PASS
-	ComPtr<ID3DBlob> rootBlob;
-	ComPtr<ID3DBlob> errorBlob;
+	{
+		ComPtr<ID3DBlob> rootBlob;
+		ComPtr<ID3DBlob> errorBlob;
 
-	// We have two root parameters, one is a pointer to a descriptor heap with a SRV, the second is a constant buffer view
-	CD3DX12_ROOT_PARAMETER parameters[2];
+		// We have two root parameters, one is a pointer to a descriptor heap with a SRV, the second is a constant buffer view
+		CD3DX12_ROOT_PARAMETER parameters[2];
 
-	// Create a descriptor table with one entry in our descriptor heap
-	CD3DX12_DESCRIPTOR_RANGE range;
-	range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 0);
-	parameters[0].InitAsDescriptorTable(1, &range);
+		// Create a descriptor table with one entry in our descriptor heap
+		CD3DX12_DESCRIPTOR_RANGE range;
+		range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0);
+		parameters[0].InitAsDescriptorTable(1, &range);
 
-	// Our constant buffer view
-	parameters[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL );
+		// Our constant buffer view
+		parameters[1].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 
-	// We don't use another descriptor heap for the sampler, instead we use a static sampler
-	CD3DX12_STATIC_SAMPLER_DESC samplers[1];
-	samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
+		// We don't use another descriptor heap for the sampler, instead we use a static sampler
+		CD3DX12_STATIC_SAMPLER_DESC samplers[1];
+		samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
-	CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
+		CD3DX12_ROOT_SIGNATURE_DESC descRootSignature;
 
-	// Create the root signature
-	descRootSignature.Init(2, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		// Create the root signature
+		descRootSignature.Init(2, parameters, 1, samplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	//descRootSignature.Init(1, rootParameters, 0, NULL, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);
-	mD3DDevice->CreateRootSignature(0, rootBlob->GetBufferPointer(), rootBlob->GetBufferSize(), IID_PPV_ARGS(&mFSPassRootSignature));
+		//descRootSignature.Init(1, rootParameters, 0, NULL, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		D3D12SerializeRootSignature(&descRootSignature, D3D_ROOT_SIGNATURE_VERSION_1, &rootBlob, &errorBlob);
+		mD3DDevice->CreateRootSignature(0, rootBlob->GetBufferPointer(), rootBlob->GetBufferSize(), IID_PPV_ARGS(&mFSPassRootSignature));
+	}
 
 
 
@@ -445,7 +447,7 @@ bool Render::InitDevice()
 		srv_desc.Buffer.StructureByteStride = sizeof(tPixel);
 		srv_desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle(mSRVUAVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 0, mSRVUAVDescriptorSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle(mSRVUAVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, mSRVUAVDescriptorSize);
 		mD3DDevice->CreateShaderResourceView(mRayCastOutput.Get(), &srv_desc, srv_handle);
 	}
 
@@ -561,7 +563,7 @@ bool Render::InitDevice()
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MipLevels = 1;
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle(mSRVUAVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 1, mSRVUAVDescriptorSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle(mSRVUAVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 2, mSRVUAVDescriptorSize);
 		mD3DDevice->CreateShaderResourceView(mNoiseTexture.Get(), &srvDesc, srv_handle);
 	}
 
@@ -721,11 +723,12 @@ void Render::DoRender()
 	{
 		command_list->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mRayCastOutput.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
+
 		command_list->SetPipelineState(mRayCastPSO.Get());
 		command_list->SetComputeRootSignature(mRayCastRootSignature.Get());
 
-		ID3D12DescriptorHeap* ppHeaps[] = { mSRVUAVDescriptorHeap.Get() };
-		command_list->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		ID3D12DescriptorHeap* heaps[] = { mSRVUAVDescriptorHeap.Get() };
+		command_list->SetDescriptorHeaps(_countof(heaps), heaps);
 
 		command_list->SetComputeRootDescriptorTable(0, mSRVUAVDescriptorHeap->GetGPUDescriptorHandleForHeapStart() );
 		command_list->SetComputeRootConstantBufferView(1, mConstantBuffers[mCurrentBackBuffer]->GetGPUVirtualAddress());
@@ -742,21 +745,15 @@ void Render::DoRender()
 
 	//DO FULLSCREEN PASS
 	{
-		// Set our state (shaders, etc.)
 		command_list->SetPipelineState(mFSPassPSO.Get());
-
-		// Set our root signature
 		command_list->SetGraphicsRootSignature(mFSPassRootSignature.Get());
 
-		// Set the descriptor heap containing the texture srv
 		ID3D12DescriptorHeap* heaps[] = { mSRVUAVDescriptorHeap.Get() };
-		command_list->SetDescriptorHeaps(1, heaps);
+		command_list->SetDescriptorHeaps(_countof(heaps), heaps);
 
-		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV and raycast output SRV
-		command_list->SetGraphicsRootDescriptorTable(0, mSRVUAVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		command_list->SetGraphicsRootDescriptorTable(0, mSRVUAVDescriptorHeap->GetGPUDescriptorHandleForHeapStart());		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV and raycast output SRV
+		command_list->SetGraphicsRootConstantBufferView(1, mConstantBuffers[mCurrentBackBuffer]->GetGPUVirtualAddress()); 	// Set slot 1 of our root signature to the constant buffer view
 
-		// Set slot 1 of our root signature to the constant buffer view
-		command_list->SetGraphicsRootConstantBufferView(1, mConstantBuffers[mCurrentBackBuffer]->GetGPUVirtualAddress());
 
 		command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		command_list->IASetVertexBuffers(0, 1, &mVertexBufferView);
