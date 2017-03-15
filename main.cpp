@@ -11,7 +11,7 @@
 HWND gHWnd = NULL;
 int gWidth = 1920;
 int gHeight = 1080;
-bool gVsync = true;
+bool gVsync = false;
 bool gFullScreen = false;
 
 

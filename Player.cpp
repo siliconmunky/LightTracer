@@ -103,7 +103,8 @@ void Player::RotateUpDown(float radians)
 void Player::Update(float dt)
 //-------------------------------------------------------------------------------------------
 {
-	static float accel = 100.0f;
+	//update velocity and position
+	static float accel = 70.0f;
 	Vector3 motion_vec = mStrafeLR + mMoveFB;
 	if (~motion_vec > 0.0f)
 	{
@@ -111,16 +112,20 @@ void Player::Update(float dt)
 	}
 	mVelocity = mVelocity + motion_vec*accel*dt;
 
+
+	static float drag_friction = 30.0f;
+	float drag_ratio = 1 / (1 + (dt * drag_friction));
+	mVelocity = mVelocity * drag_ratio;
+
+
 	static float motion_speed = 2.2f;
 	mPosition = mPosition + (mVelocity)*motion_speed*dt;
 
 	mStrafeLR = Vector3::ORIGIN;
 	mMoveFB = Vector3::ORIGIN;
 
-	static float decel = 100.0f;
-	mVelocity = mVelocity - mVelocity * ~mVelocity*decel*dt;
 
-
+	//Position the camera relative to the player
 	Camera& cam = Game::Instance->mCam;
 
 	const float height = 1.5f;
