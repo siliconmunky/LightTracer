@@ -47,6 +47,9 @@
     <ClInclude Include="Render.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vector3.cpp">
@@ -93,6 +96,9 @@
     </ClCompile>
     <ClCompile Include="middleware\DirectXTex-master\WICTextureLoader\WICTextureLoader12.cpp">
       <Filter>Source Files\dx</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

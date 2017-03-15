@@ -4,6 +4,7 @@
 
 #include "Input.h"
 #include "Camera.h"
+#include "Player.h"
 #include "Render.h"
 #include "Audio.h"
 
@@ -24,6 +25,7 @@ public:
 
 	
 	Input mInput;
+	Player mPlayer;
 	Camera mCam;
 	Render mRender;
 	Audio mAudio;

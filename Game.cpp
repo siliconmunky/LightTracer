@@ -23,10 +23,6 @@ Game::Game()
 {
 	Instance = this;
 	
-	mCam.SetPosition(Vector3(0, 1, -3));
-	mCam.SetLookDir(Vector3(0, 0, 1));
-	mCam.SetUpDir(Vector3(0, 1, 0));
-
 	mGameStartTime = std::clock();
 	mPrevFrameTime = std::clock();
 
@@ -51,6 +47,8 @@ void Game::GameLoop()
 
 	CalculateFPS(dt);
 	HandleInput(dt);
+
+	mPlayer.Update(dt);
 
 	mAudio.Update(dt);
 
@@ -103,23 +101,22 @@ float Game::GetTime()
 
 void Game::HandleInput(float dt)
 {
-	static float move_sens = 2.5f;
 	if( mInput.IsKeyDown(IX_KEY_W) )
 	{
-		mCam.MoveForwardBack(move_sens*dt);
+		mPlayer.MoveForwardBack(1.0f);
 	}
 	if (mInput.IsKeyDown(IX_KEY_S))
 	{
-		mCam.MoveForwardBack(-move_sens*dt);
+		mPlayer.MoveForwardBack(-1.0f);
 	}
 
 	if (mInput.IsKeyDown(IX_KEY_A))
 	{
-		mCam.StrafeLeftRight(-move_sens*dt);
+		mPlayer.StrafeLeftRight(-1.0f);
 	}
 	if (mInput.IsKeyDown(IX_KEY_D))
 	{
-		mCam.StrafeLeftRight(move_sens*dt);
+		mPlayer.StrafeLeftRight(1.0f);
 	}
 
 	if (mInput.IsKeyJustDown(IX_KEY_SPACE))
@@ -143,6 +140,6 @@ void Game::HandleInput(float dt)
 
 	static float x_sensitivity = 0.0006f;
 	static float y_sensitivity = 0.0006f;
-	mCam.RotateLeftRight(mInput.GetInputMotion(IX_MOUSE_X) * x_sensitivity);
-	mCam.RotateUpDown(-mInput.GetInputMotion(IX_MOUSE_Y) * x_sensitivity);
+	mPlayer.RotateLeftRight(mInput.GetInputMotion(IX_MOUSE_X) * x_sensitivity);
+	mPlayer.RotateUpDown(-mInput.GetInputMotion(IX_MOUSE_Y) * x_sensitivity);
 }

@@ -159,6 +159,7 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Matrix3x3.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="Render.h" />
     <ClInclude Include="Vector3.h" />
   </ItemGroup>
@@ -171,6 +172,7 @@
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="middleware\DirectXTex-master\WICTextureLoader\WICTextureLoader12.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="scene\PointLight.cpp" />
     <ClCompile Include="scene\Scene.cpp" />
