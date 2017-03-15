@@ -1,25 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "light_tracer", "light_tracer.vcxproj", "{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|ARM = Debug|ARM
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
-		Release|ARM = Release|ARM
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Debug|ARM.ActiveCfg = Debug|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Debug|Win32.ActiveCfg = Debug|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Debug|Win32.Build.0 = Debug|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Debug|x64.ActiveCfg = Debug|Win32
-		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|ARM.ActiveCfg = Release|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|Win32.ActiveCfg = Release|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|Win32.Build.0 = Release|Win32
 		{5FCD6A79-460D-4FB6-9FD0-2260A924D6BA}.Release|x64.ActiveCfg = Release|Win32
