@@ -5,4 +5,4 @@ bin/light_tracer\.iobj
 
 bin/light_tracer\.ipdb
 
-x64/
+intermediate/
