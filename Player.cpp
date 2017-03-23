@@ -12,9 +12,9 @@ Player::Player()
 {
 	Instance = this;
 
-	mPosition = Vector3(5,0,0);
-	mView = Vector3( 0, 0, 1);
-	mUpVector = Vector3(0,1,0);
+	mPosition = Vector3(0, 0, 0);
+	mView = Vector3(0, 0, 1);
+	mUpVector = Vector3(0, 1, 0);
 
 	mStrafeLR = Vector3::ORIGIN;
 	mMoveFB = Vector3::ORIGIN;
